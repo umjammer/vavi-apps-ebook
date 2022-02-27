@@ -705,13 +705,15 @@ public class AozoraEpub3
         return txtCount;
     }
 
+    static final String[] extOrder = {"png","jpg","jpeg","PNG","JPG","JPEG","Png","Jpg","Jpeg"};
+
     /** 入力ファイルと同じ名前の画像を取得
      * png, jpg, jpegの順で探す  */
     static public String getSameCoverFileName(File srcFile)
     {
         String baseFileName = srcFile.getPath();
         baseFileName = baseFileName.substring(0, baseFileName.lastIndexOf('.')+1);
-        for (String ext : new String[]{"png","jpg","jpeg","PNG","JPG","JPEG","Png","Jpg","Jpeg"}) {
+        for (String ext : extOrder) {
             String coverFileName = baseFileName+ext;
             if (new File(coverFileName).exists()) return coverFileName;
         }

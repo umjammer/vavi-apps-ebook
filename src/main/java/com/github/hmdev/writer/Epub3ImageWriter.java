@@ -30,15 +30,15 @@ import com.github.junrar.rarfile.FileHeader;
 public class Epub3ImageWriter extends Epub3Writer
 {
     /** コピーのみのファイル */
-    final static String[] TEMPLATE_FILE_NAMES_VERTICAL_IMAGE = new String[]{
+    final static String[] TEMPLATE_FILE_NAMES_VERTICAL_IMAGE = {
         "META-INF/container.xml",
         OPS_PATH+CSS_PATH+"vertical_image.css"
     };
-    final static String[] TEMPLATE_FILE_NAMES_HORIZONTAL_IMAGE = new String[]{
+    final static String[] TEMPLATE_FILE_NAMES_HORIZONTAL_IMAGE = {
         "META-INF/container.xml",
         OPS_PATH+CSS_PATH+"horizontal_image.css"
     };
-    final static String[] TEMPLATE_FILE_NAMES_SVG_IMAGE = new String[]{
+    final static String[] TEMPLATE_FILE_NAMES_SVG_IMAGE = {
         "META-INF/container.xml",
         OPS_PATH+CSS_PATH+"fixed-layout-jp.css"
     };
@@ -87,8 +87,7 @@ public class Epub3ImageWriter extends Epub3Writer
             try {
             for (FileHeader fileHeader : archive.getFileHeaders()) {
                 if (!fileHeader.isDirectory()) {
-                    String entryName = fileHeader.getFileNameW();
-                    if (entryName.length() == 0) entryName = fileHeader.getFileNameString();
+                    String entryName = fileHeader.getFileName();
                     entryName = entryName.replace('\\', '/');
                     //アーカイブ内のサブフォルダは除外
                     String srcImageFileName = entryName.substring(archivePathLength);

@@ -1181,13 +1181,14 @@ public class Epub3Writer
         this.gaijiNameSet.add(className);
     }
 
-    /** 連番に変更した画像ファイル名を返却.
+    /**
+     * 連番に変更した画像ファイル名を返却.
      * 重複していたら前に出力したときの連番ファイル名を返す
      * 返り値はxhtmlからの相対パスにする (../images/0001.jpg)
      * 変更前と変更後のファイル名はimageFileNamesに格納される (images/0001.jpg)
      * @return 画像タグを出力しない場合はnullを返す
      * @throws IOException
-     *  */
+     */
     public String getImageFilePath(String srcImageFileName, int lineNum) throws IOException
     {
         boolean isCover = false;

@@ -361,7 +361,10 @@ public class ImageInfoReader
                 if (entry == null) {
                     srcImageFileName = this.correctExt(srcImageFileName);
                     entry = zf.getEntry(srcImageFileName);
-                    if (entry == null) return null;
+                    if (entry == null) {
+                        zf.close();
+                        return null;
+                    }
                 }
                 InputStream is = zf.getInputStream(entry);
                 try {
