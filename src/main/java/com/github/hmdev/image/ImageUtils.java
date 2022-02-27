@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Iterator;
+import java.util.logging.Logger;
 
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
@@ -29,10 +30,11 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.compress.utils.IOUtils;
 
 import com.github.hmdev.info.ImageInfo;
-import com.github.hmdev.util.LogAppender;
 
 public class ImageUtils
 {
+    static Logger logger = Logger.getLogger("com.github.hmdev");
+
     /** 4bitグレースケール時のRGB階調カラーモデル Singleton */
     static ColorModel GRAY16_COLOR_MODEL;
     /** 8bitグレースケール時のRGB階調カラーモデル Singleton */
@@ -238,7 +240,7 @@ public class ImageUtils
                     _writeImage(zos, srcImage, ext, jpegQuality);
                     imageInfo.setOutWidth(srcImage.getWidth());
                     imageInfo.setOutHeight(srcImage.getHeight());
-                    if (imageInfo.rotateAngle != 0) LogAppender.println("画像回転"+": "+imageInfo.getOutFileName()+" ("+h+","+w+")");
+                    if (imageInfo.rotateAngle != 0) logger.info("画像回転"+": "+imageInfo.getOutFileName()+" ("+h+","+w+")");
                 }
             }
         } else {
@@ -361,14 +363,14 @@ public class ImageUtils
             imageInfo.setOutWidth(outImage.getWidth());
             imageInfo.setOutHeight(outImage.getHeight());
             if (scale < 1) {
-                LogAppender.append("画像縮小");
-                if (imageInfo.rotateAngle!=0) LogAppender.append("回転");
-                LogAppender.println(": "+imageInfo.getOutFileName()+" ("+w+","+h+")→("+scaledW+","+scaledH+")");
+                logger.info("画像縮小");
+                if (imageInfo.rotateAngle!=0) logger.info("回転");
+                logger.info(": "+imageInfo.getOutFileName()+" ("+w+","+h+")→("+scaledW+","+scaledH+")");
             }
             zos.flush();
         }
         } catch (Exception e) {
-            LogAppender.println("画像読み込みエラー: "+imageInfo.getOutFileName());
+            logger.info("画像読み込みエラー: "+imageInfo.getOutFileName());
             e.printStackTrace();
         }
     }

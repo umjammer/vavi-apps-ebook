@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Vector;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 import org.apache.commons.compress.utils.IOUtils;
@@ -30,12 +31,13 @@ import org.jsoup.nodes.TextNode;
 import org.jsoup.select.Elements;
 
 import com.github.hmdev.util.CharUtils;
-import com.github.hmdev.util.LogAppender;
 import com.github.hmdev.web.ExtractInfo.ExtractId;
 
 /** HTMLを青空txtに変換 */
 public class WebAozoraConverter
 {
+    static Logger logger = Logger.getLogger("com.github.hmdev");
+
     final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 
     /** Singletonインスタンス格納 keyはFQDN */
@@ -94,7 +96,7 @@ public class WebAozoraConverter
         if (converter == null) {
             converter = new WebAozoraConverter(fqdn, configPath);
             if (!converter.isValid()) {
-                LogAppender.println("サイトの定義がありません: "+configPath.getName()+"/"+fqdn);
+                logger.info("サイトの定義がありません: "+configPath.getName()+"/"+fqdn);
                 return null;
             }
             converters.put(fqdn, converter);
@@ -217,7 +219,7 @@ public class WebAozoraConverter
                 connection = (HttpURLConnection) new URL(urlString+"/").openConnection();
                 if (connection.getResponseCode() == 200) {
                     urlString += "/";
-                    LogAppender.println("URL修正 : "+urlString);
+                    logger.info("URL修正 : "+urlString);
                 }
             } catch (Exception e) {
             } finally {
@@ -237,7 +239,7 @@ public class WebAozoraConverter
         /*ExtractInfo[] extractInfos = this.queryMap.get(ExtractId.PAGE_REGEX);
         if(extractInfos != null) {
             if (!extractInfos[0].matches(urlString)) {
-                LogAppender.println("読み込み可能なURLではありません");
+                logger.info("読み込み可能なURLではありません");
                 return null;
             }
         }*/
@@ -246,7 +248,7 @@ public class WebAozoraConverter
         //kakuyomu用のアドレス修正
         if((urlFilePath.indexOf("kakuyomu")!= -1) || (urlFilePath.indexOf("novelup")!= -1)) {
             urlFilePath +="/";
-            LogAppender.println("URL修正");
+            logger.info("URL修正");
         }
 
         boolean isPath = false;
@@ -275,15 +277,15 @@ public class WebAozoraConverter
             //urlStringのファイルをキャッシュ
             File cacheFile = new File(cachePath.getAbsolutePath()+"/"+urlFilePath);
             try {
-                LogAppender.append(urlString);
+                logger.info(urlString);
                 cacheFile(urlString, cacheFile, null);
-                LogAppender.println(" : List Loaded.");
+                logger.info(" : List Loaded.");
             } catch (Exception e) {
                 e.printStackTrace();
-                LogAppender.println("一覧ページの取得に失敗しました。 ");
+                logger.info("一覧ページの取得に失敗しました。 ");
                 if (!cacheFile.exists()) return null;
 
-                LogAppender.println("キャッシュファイルを利用します。");
+                logger.info("キャッシュファイルを利用します。");
             }
 
             //パスならlist.txtの情報を元にキャッシュ後に青空txt変換して改ページで繋げて出力
@@ -310,7 +312,7 @@ public class WebAozoraConverter
                 hasTitle = true;
             }
             if (!hasTitle) {
-                LogAppender.println("SERIES/TITLE : タイトルがありません");
+                logger.info("SERIES/TITLE : タイトルがありません");
                 return null;
             }
 
@@ -347,12 +349,12 @@ public class WebAozoraConverter
 
             Elements hrefs = getExtractElements(doc, this.queryMap.get(ExtractId.HREF));
             if (hrefs == null && this.queryMap.containsKey(ExtractId.HREF)) {
-                LogAppender.println("HREF : 各話のリンク先URLが取得できません");
+                logger.info("HREF : 各話のリンク先URLが取得できません");
             }
 
             Vector<String> subtitles = getExtractStrings(doc, this.queryMap.get(ExtractId.SUBTITLE_LIST), true);
             if (subtitles == null && this.queryMap.containsKey(ExtractId.SUBTITLE_LIST)) {
-                LogAppender.println("SUBTITLE_LIST : 各話タイトルが取得できません");
+                logger.info("SUBTITLE_LIST : 各話タイトルが取得できません");
             }
 
             //更新のない各話のURL(フルパス)を格納
@@ -363,13 +365,13 @@ public class WebAozoraConverter
                 //ページ番号取得
                 String pageNumString = getExtractText(doc, this.queryMap.get(ExtractId.PAGE_NUM));
                 if (pageNumString == null && this.queryMap.containsKey(ExtractId.PAGE_NUM)) {
-                    LogAppender.println("PAGE_NUM : ページ数が取得できません");
+                    logger.info("PAGE_NUM : ページ数が取得できません");
                 }
                 int pageNum = -1;
                 try { pageNum = Integer.parseInt(pageNumString); } catch (Exception e) {}
                 Element pageUrlElement = getExtractFirstElement(doc, this.queryMap.get(ExtractId.PAGE_URL));
                 if (pageUrlElement == null && this.queryMap.containsKey(ExtractId.PAGE_URL)) {
-                    LogAppender.println("PAGE_URL : ページ番号用のURLが取得できません");
+                    logger.info("PAGE_URL : ページ番号用のURLが取得できません");
                 }
                 if (pageNum > 0 && pageUrlElement != null) {
                     ExtractInfo pageUrlExtractInfo = this.queryMap.get(ExtractId.PAGE_URL)[0];
@@ -393,7 +395,7 @@ public class WebAozoraConverter
                         //一覧のリンクはないが本文がある場合
                         docToAozoraText(bw, doc, false, null, null);
                     } else {
-                        LogAppender.println("一覧のURLが取得できませんでした");
+                        logger.info("一覧のURLが取得できませんでした");
                         return null;
                     }
                 }
@@ -401,7 +403,7 @@ public class WebAozoraConverter
                 //更新分のみ取得するようにするためhrefに対応した日付タグの文字列(innerHTML)を取得して保存しておく
                 Elements updates = getExtractElements(doc, this.queryMap.get(ExtractId.SUB_UPDATE));
                 if (updates == null && this.queryMap.containsKey(ExtractId.SUB_UPDATE)) {
-                    LogAppender.println("SUB_UPDATE : 更新確認情報が取得できません");
+                    logger.info("SUB_UPDATE : 更新確認情報が取得できません");
                 }
                 if (updates != null) {
                     //更新しないURLのチェック用
@@ -425,7 +427,7 @@ public class WebAozoraConverter
 
                 postDateList = getPostDateList(doc, this.queryMap.get(ExtractId.CONTENT_UPDATE_LIST));
                 if (postDateList == null && this.queryMap.containsKey(ExtractId.CONTENT_UPDATE_LIST)) {
-                    LogAppender.println("CONTENT_UPDATE_LIST : 一覧ページの更新日時情報が取得できません");
+                    logger.info("CONTENT_UPDATE_LIST : 一覧ページの更新日時情報が取得できません");
                 }
             }
 
@@ -467,24 +469,24 @@ public class WebAozoraConverter
                         if (noUpdateUrls != null && !noUpdateUrls.contains(chapterHref)) reload = true;
 
                         if (reload || !chapterCacheFile.exists()) {
-                            LogAppender.append("["+(chapterIdx+1)+"/"+chapterHrefs.size()+"] "+chapterHref);
+                            logger.info("["+(chapterIdx+1)+"/"+chapterHrefs.size()+"] "+chapterHref);
                             try {
                                 try { Thread.sleep(this.interval); } catch (InterruptedException e) { }
                                 cacheFile(chapterHref, chapterCacheFile, urlString);
-                                LogAppender.println(" : Loaded.");
+                                logger.info(" : Loaded.");
                                 //ファイルがロードされたら更新有り
                                 this.updated = true;
                                 loaded = true;
                             } catch (Exception e) {
                                 e.printStackTrace();
-                                LogAppender.println("htmlファイルが取得できませんでした : "+chapterHref);
+                                logger.info("htmlファイルが取得できませんでした : "+chapterHref);
                             }
                         }
                         //キャッシュされているファイルが指定時間内なら更新扱い
                         if (!loaded) {
                             if (this.modifiedExpire > 0 && (this.convertModifiedOnly || this.convertUpdated) && chapterCacheFile.lastModified() >= expire) {
-                                LogAppender.append("["+(chapterIdx+1)+"/"+chapterHrefs.size()+"] "+chapterHref);
-                                LogAppender.println(" : Modified.");
+                                logger.info("["+(chapterIdx+1)+"/"+chapterHrefs.size()+"] "+chapterHref);
+                                logger.info(" : Modified.");
                                 this.updated = true;
                             }
                         }
@@ -506,8 +508,8 @@ public class WebAozoraConverter
                 }
                 //更新が無くて変換もなければ終了
                 if (!this.updated) {
-                    LogAppender.append("「"+title+"」");
-                    LogAppender.println("の更新はありません");
+                    logger.info("「"+title+"」");
+                    logger.info("の更新はありません");
                     if (this.convertUpdated) return null;
                 }
 
@@ -529,7 +531,7 @@ public class WebAozoraConverter
                         }
                     }
                     if (modifiedChapterIdx.size() == 0) {
-                        LogAppender.println("追加更新分はありません");
+                        logger.info("追加更新分はありません");
                         this.updated = false;
                         return null;
                     }
@@ -602,7 +604,7 @@ public class WebAozoraConverter
                         }
                     }
                     if (idxConnected) buf.append("-"+(preIdx+1));
-                    LogAppender.println(buf+"話を変換します");
+                    logger.info(buf+"話を変換します");
                 }
             }
             //底本にURL追加
@@ -725,7 +727,7 @@ public class WebAozoraConverter
     {
         Elements contentDivs = getExtractElements(doc, this.queryMap.get(ExtractId.CONTENT_ARTICLE));
         if (contentDivs == null || contentDivs.size() == 0) {
-            LogAppender.println("CONTENT_ARTICLE : 本文が取得できません");
+            logger.info("CONTENT_ARTICLE : 本文が取得できません");
         } else {
             if (!newChapter) bw.append("\n［＃改ページ］\n");
             String subTitle = getExtractText(doc, this.queryMap.get(ExtractId.CONTENT_SUBTITLE));
@@ -955,7 +957,7 @@ public class WebAozoraConverter
 
         File imageFile = new File(this.dstPath+"images/"+imagePath);
 
-        LogAppender.append("画像を取得してみます：" + src);
+        logger.info("画像を取得してみます：" + src);
         try {
             if (imageOutFile != null) {
                 if (imageOutFile.exists()) imageOutFile.delete();
@@ -965,9 +967,9 @@ public class WebAozoraConverter
             }
         } catch (Exception e) {
             e.printStackTrace();
-            LogAppender.println("画像が取得できませんでした : "+src);
+            logger.info("画像が取得できませんでした : "+src);
         }
-        LogAppender.println(" - 完了みたいです。");
+        logger.info(" - 完了みたいです。");
 
         if (bw != null) {
             bw.append("［＃挿絵（");
@@ -1153,7 +1155,7 @@ public class WebAozoraConverter
     {
         //if (!replace && cacheFile.exists()) return false;
         try { if (cacheFile.isDirectory()) cacheFile.delete(); } catch (Exception e) {} //空のディレクトリなら消す
-        if (cacheFile.isDirectory()) { LogAppender.println("フォルダがあるためキャッシュできません : "+cacheFile.getAbsolutePath()); }
+        if (cacheFile.isDirectory()) { logger.info("フォルダがあるためキャッシュできません : "+cacheFile.getAbsolutePath()); }
         //フォルダ以外がすでにあったら削除
         File parentFile = cacheFile.getParentFile();
         if (parentFile.exists() && !parentFile.isDirectory()) {

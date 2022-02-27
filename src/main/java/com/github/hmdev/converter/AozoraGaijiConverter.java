@@ -7,14 +7,15 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
-
-import com.github.hmdev.util.LogAppender;
+import java.util.logging.Logger;
 
 /**
  * 青空文庫注記外字をグリフ・UTF-8・代替文字に変換
  */
 public class AozoraGaijiConverter
 {
+    static Logger logger = Logger.getLogger("com.github.hmdev");
+
     /** 青空文庫注記外字をグリフタグに変換 value=CID */
     //HashMap<String, String> chukiCidMap = new HashMap<String, String>();
 
@@ -61,11 +62,11 @@ public class AozoraGaijiConverter
 
                         String utfChar = line.substring(charStart, chukiStart-1);
                         String chuki = line.substring(chukiStart+3, chukiEnd-1);
-                        if (chukiMap.containsKey(chuki)) LogAppender.warn(lineNum, "外字注記定義重複", chuki);
+                        if (chukiMap.containsKey(chuki)) logger.warning(lineNum + " 外字注記定義重複 " + chuki);
                         else chukiMap.put(chuki, utfChar);
 
                     } catch (Exception e) {
-                        LogAppender.error(lineNum, srcFile, line);
+                        logger.severe(lineNum + " " + srcFile + " " + line);
                     }
                 }
                 lineNum++;

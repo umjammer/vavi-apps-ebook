@@ -1,93 +1,65 @@
+
 package com.github.hmdev.util;
-import java.util.logging.Logger;
+
+import java.util.logging.ErrorManager;
+import java.util.logging.Formatter;
+import java.util.logging.Handler;
+import java.util.logging.LogRecord;
+import java.util.logging.SimpleFormatter;
 
 import javax.swing.JTextArea;
 
 /** ログ出力Wrapperクラス */
-public class LogAppender
-{
-    static Logger logger = Logger.getLogger(LogAppender.class.getName());
+public class LogAppender extends Handler {
 
     static JTextArea jTextArea = null;
 
-    static public void setTextArea(JTextArea _jTextArea)
-    {
+    Formatter formatter = new SimpleFormatter();
+
+    public LogAppender() {
+    }
+
+    public LogAppender(JTextArea _jTextArea) {
         jTextArea = _jTextArea;
     }
 
-    static public void println(String log)
-    {
-        LogAppender.append(log);
-        LogAppender.append("\n");
-    }
-    static public void println()
-    {
-        LogAppender.append("\n");
-    }
-    static public void append(String log)
-    {
-        if (jTextArea != null) {
-            jTextArea.append(log);
-            jTextArea.setCaretPosition(jTextArea.getDocument().getLength());
-        }
-        logger.info(log);
+    public void setTarget(JTextArea _jTextArea) {
+        jTextArea = _jTextArea;
     }
 
-    static public void printStaclTrace(Exception e)
-    {
-        for (StackTraceElement ste : e.getStackTrace()) {
-            LogAppender.append(ste.toString());
-            LogAppender.append("\n");
+    @Override
+    public void publish(LogRecord record) {
+        if (!isLoggable(record)) {
+            return;
+        }
+        String msg;
+        try {
+            msg = formatter.format(record);
+        } catch (Exception ex) {
+            reportError(null, ex, ErrorManager.FORMAT_FAILURE);
+            return;
+        }
+
+        try {
+            jTextArea.append(msg + "\n");
+        } catch (Exception ex) {
+            reportError(null, ex, ErrorManager.WRITE_FAILURE);
         }
     }
 
-    static public void msg(int lineNum, String msg, String desc)
-    {
-        LogAppender.append(msg);
-        LogAppender.append(" ("+(lineNum+1)+")");
-        if (desc != null) {
-            LogAppender.append(" : ");
-            LogAppender.append(desc);
+    @Override
+    public boolean isLoggable(LogRecord record) {
+        if (jTextArea == null || record == null) {
+            return false;
         }
-        LogAppender.append("\n");
+        return super.isLoggable(record);
     }
 
-    static public void error(String msg)
-    {
-        LogAppender.append("[ERROR] ");
-        LogAppender.append(msg);
-        LogAppender.append("\n");
-    }
-    static public void error(int lineNum, String msg, String desc)
-    {
-        LogAppender.append("[ERROR] ");
-        LogAppender.msg(lineNum, msg, desc);
-    }
-    static public void error(int lineNum, String msg)
-    {
-        LogAppender.append("[ERROR] ");
-        LogAppender.msg(lineNum, msg, null);
+    @Override
+    public void flush() {
     }
 
-    static public void warn(int lineNum, String msg, String desc)
-    {
-        LogAppender.append("[WARN] ");
-        LogAppender.msg(lineNum, msg, desc);
-    }
-    static public void warn(int lineNum, String msg)
-    {
-        LogAppender.append("[WARN] ");
-        LogAppender.msg(lineNum, msg, null);
-    }
-
-    static public void info(int lineNum, String msg, String desc)
-    {
-        LogAppender.append("[INFO] ");
-        LogAppender.msg(lineNum, msg, desc);
-    }
-    static public void info(int lineNum, String msg)
-    {
-        LogAppender.append("[INFO] ");
-        LogAppender.msg(lineNum, msg, null);
+    @Override
+    public void close() throws SecurityException {
     }
 }

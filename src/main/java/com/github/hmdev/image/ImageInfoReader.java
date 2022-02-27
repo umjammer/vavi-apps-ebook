@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Vector;
+import java.util.logging.Logger;
 
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
@@ -19,7 +20,6 @@ import org.apache.commons.compress.archivers.zip.ZipFile;
 
 import com.github.hmdev.info.ImageInfo;
 import com.github.hmdev.util.FileNameComparator;
-import com.github.hmdev.util.LogAppender;
 import com.github.junrar.Archive;
 import com.github.junrar.exception.RarException;
 import com.github.junrar.rarfile.FileHeader;
@@ -30,6 +30,8 @@ import com.github.junrar.rarfile.FileHeader;
  */
 public class ImageInfoReader
 {
+    static Logger logger = Logger.getLogger("com.github.hmdev");
+
     /** 画像が圧縮ファイル内でなくファイルならtrue
      *  画像データ取得時にファイルシステムから取得するかの判別用 */
     boolean isFile = true;
@@ -226,15 +228,15 @@ public class ImageInfoReader
         ArchiveEntry entry;
         int idx = 0;
         while ((entry = zis.getNextEntry()) != null) {
-            if (idx++ % 10 == 0) LogAppender.append(".");
+            if (idx++ % 10 == 0) logger.info(".");
             String entryName = entry.getName();
             String lowerName = entryName.toLowerCase();
             if (lowerName.endsWith(".png") || lowerName.endsWith(".jpg") || lowerName.endsWith(".jpeg") || lowerName.endsWith(".gif")) {
                 ImageInfo imageInfo = null;
                 try {
-                    imageInfo = ImageInfo.getImageInfo(zis, zis.getCount());
+                    imageInfo = ImageInfo.getImageInfo(zis, (int) zis.getBytesRead());
                 } catch (Exception e) {
-                    LogAppender.error("画像が読み込めませんでした: "+srcFile.getPath());
+                    logger.severe("画像が読み込めませんでした: "+srcFile.getPath());
                     e.printStackTrace();
                 }
                 if (imageInfo != null) {
@@ -244,7 +246,6 @@ public class ImageInfoReader
             }
         }
         } finally {
-            LogAppender.println();
             zis.close();
         }
     }
@@ -255,10 +256,9 @@ public class ImageInfoReader
         try {
         int idx = 0;
         for (FileHeader fileHeader : archive.getFileHeaders()) {
-            if (idx++ % 10 == 0) LogAppender.append(".");
+            if (idx++ % 10 == 0) logger.info(".");
             if (!fileHeader.isDirectory()) {
-                String entryName = fileHeader.getFileNameW();
-                if (entryName.length() == 0) entryName = fileHeader.getFileNameString();
+                String entryName = fileHeader.getFileName();
                 entryName = entryName.replace('\\', '/');
                 String lowerName = entryName.toLowerCase();
                 if (lowerName.endsWith(".png") || lowerName.endsWith(".jpg") || lowerName.endsWith(".jpeg") || lowerName.endsWith(".gif")) {
@@ -275,12 +275,10 @@ public class ImageInfoReader
                             this.imageFileInfos.put(entryName, imageInfo);
                             if (addFileName) this.addImageFileName(entryName);
                         } else {
-                            LogAppender.println();
-                            LogAppender.error("画像が読み込めませんでした: "+entryName);
+                            logger.severe("画像が読み込めませんでした: "+entryName);
                         }
                     } catch (Exception e) {
-                        LogAppender.println();
-                        LogAppender.error("画像が読み込めませんでした: "+entryName);
+                        logger.severe("画像が読み込めませんでした: "+entryName);
                         e.printStackTrace();
                     } finally {
                         if (is != null) is.close();
@@ -289,7 +287,6 @@ public class ImageInfoReader
             }
         }
         } finally {
-            LogAppender.println();
             archive.close();
         }
     }

@@ -21,6 +21,7 @@ import java.text.SimpleDateFormat;
 import java.util.HashSet;
 import java.util.UUID;
 import java.util.Vector;
+import java.util.logging.Logger;
 import java.util.zip.CRC32;
 
 import javax.swing.JProgressBar;
@@ -44,7 +45,6 @@ import com.github.hmdev.info.GaijiInfo;
 import com.github.hmdev.info.ImageInfo;
 import com.github.hmdev.info.SectionInfo;
 import com.github.hmdev.util.CharUtils;
-import com.github.hmdev.util.LogAppender;
 import com.github.junrar.Archive;
 import com.github.junrar.rarfile.FileHeader;
 
@@ -54,6 +54,8 @@ import com.github.junrar.rarfile.FileHeader;
  */
 public class Epub3Writer
 {
+    static Logger logger = Logger.getLogger("com.github.hmdev");
+
     /** MIMETYPEパス */
     final static String MIMETYPE_PATH = "mimetype";
 
@@ -620,7 +622,7 @@ public class Epub3Writer
                 coverImageInfo.setId("0000");
                 coverImageInfo.setOutFileName("0000."+ext);
                 if (!ext.matches("^(png|jpg|jpeg|gif)$")) {
-                    LogAppender.println("表紙画像フォーマットエラー: "+bookInfo.coverFileName);
+                    logger.info("表紙画像フォーマットエラー: "+bookInfo.coverFileName);
                     coverImageInfo = null;
                 } else {
                     coverImageInfo.setIsCover(true);
@@ -924,7 +926,7 @@ public class Epub3Writer
                 if (this.jProgressBar != null) this.jProgressBar.setValue(this.jProgressBar.getValue()+10);
             } catch (Exception e) {
                 e.printStackTrace();
-                LogAppender.error("表紙画像取得エラー: "+bookInfo.coverFileName);
+                logger.severe("表紙画像取得エラー: "+bookInfo.coverFileName);
             }
         }
         if (this.canceled) return;
@@ -938,7 +940,7 @@ public class Epub3Writer
                 if (outImageFileNames.contains(srcImageFileName)) {
                     ImageInfo imageInfo = imageInfoReader.getImageInfo(srcImageFileName);
                     if (imageInfo == null) {
-                        LogAppender.println("[WARN] 画像ファイルなし: "+srcImageFileName);
+                        logger.info("[WARN] 画像ファイルなし: "+srcImageFileName);
                     } else {
                         File imageFile = imageInfoReader.getImageFile(srcImageFileName);
                         if (imageFile.exists()) {
@@ -1200,7 +1202,7 @@ public class Epub3Writer
             String altImageFileName = this.imageInfoReader.correctExt(srcImageFileName);
             imageInfo = this.imageInfoReader.getImageInfo(altImageFileName);
             if (imageInfo != null) {
-                LogAppender.warn(lineNum, "画像拡張子変更", srcImageFileName);
+                logger.warning(lineNum + " 画像拡張子変更 " + srcImageFileName);
                 srcImageFileName = altImageFileName;
             }
         }
@@ -1225,7 +1227,7 @@ public class Epub3Writer
             if (bookInfo.insertCoverPage && isCover) return null;
             return "../"+IMAGES_PATH+outImageFileName;
         } else {
-            LogAppender.warn(lineNum, "画像ファイルなし", srcImageFileName);
+            logger.warning(lineNum + " 画像ファイルなし " + srcImageFileName);
         }
         return null;
     }
@@ -1307,10 +1309,10 @@ public class Epub3Writer
                             }
                         }
                     } else {
-                        LogAppender.warn(lineNum, "キャプションがあるため画像単ページ化されません");
+                        logger.warning(lineNum +  " キャプションがあるため画像単ページ化されません");
                     }
                 } else {
-                    LogAppender.warn(lineNum, "タグ内のため画像単ページ化できません");
+                    logger.warning(lineNum + " タグ内のため画像単ページ化できません");
                 }
             }
 

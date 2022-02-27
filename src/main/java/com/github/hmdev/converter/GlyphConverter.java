@@ -7,8 +7,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.HashMap;
-
-import com.github.hmdev.util.LogAppender;
+import java.util.logging.Logger;
 
 /**
  * パラメータファイルで指定されたUTF-8をグリフタグに変換するクラス
@@ -16,6 +15,8 @@ import com.github.hmdev.util.LogAppender;
  */
 public class GlyphConverter
 {
+    static Logger logger = Logger.getLogger("com.github.hmdev");
+
     /** 分解表記文字列→拡張ラテン文字の対応テーブル */
     HashMap<Character, String> cidMap = new HashMap<Character, String>();
 
@@ -47,7 +48,7 @@ public class GlyphConverter
                         String[] values = line.split("\t");
                         char ch = values[0].charAt(0);
                         if (!cidMap.containsKey(ch)) cidMap.put(ch, values[1]);
-                    } catch (Exception e) { LogAppender.error(lineNum, srcFile.getName(), line); }
+                    } catch (Exception e) { logger.severe(lineNum + " " + srcFile.getName() + " " + line); }
                 }
             }
         } finally {

@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Properties;
+import java.util.logging.Logger;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
@@ -22,7 +23,6 @@ import com.github.hmdev.image.ImageInfoReader;
 import com.github.hmdev.info.BookInfo;
 import com.github.hmdev.info.SectionInfo;
 import com.github.hmdev.util.Detector;
-import com.github.hmdev.util.LogAppender;
 import com.github.hmdev.writer.Epub3ImageWriter;
 import com.github.hmdev.writer.Epub3Writer;
 import com.github.junrar.Archive;
@@ -33,6 +33,8 @@ import com.github.junrar.rarfile.FileHeader;
 public class AozoraEpub3
 {
     public static final String VERSION = "1.1.1b12Q";
+
+    static Logger logger = Logger.getLogger("com.github.hmdev");
 
     /** コマンドライン実行用 */
     public static void main(String args[])
@@ -306,10 +308,10 @@ public class AozoraEpub3
             //各ファイルを変換処理
             ////////////////////////////////
             for (String fileName : fileNames) {
-                LogAppender.println("--------");
+                logger.info("-------- " + fileName);
                 File srcFile = new File(fileName);
                 if (srcFile == null || !srcFile.isFile()) {
-                    LogAppender.error("file not exist. "+srcFile.getAbsolutePath());
+                    logger.severe("file not exist. "+srcFile.getAbsolutePath());
                     continue;
                 }
                 String ext = srcFile.getName();
@@ -379,7 +381,7 @@ public class AozoraEpub3
                             imageInfoReader.loadZipImageInfos(srcFile, imageOnly);
                         }
                         if (imageOnly) {
-                            LogAppender.println("画像のみのePubファイルを生成します");
+                            logger.info("画像のみのePubファイルを生成します");
                             //画像出力用のBookInfo生成
                             bookInfo = new BookInfo(srcFile);
                             bookInfo.imageOnly = true;
@@ -387,7 +389,7 @@ public class AozoraEpub3
                             writer = epub3ImageWriter;
 
                             if (imageInfoReader.countImageFileInfos() == 0) {
-                                LogAppender.error("画像がありませんでした");
+                                logger.severe("画像がありませんでした");
                                 return;
                             }
                             //名前順で並び替え
@@ -397,7 +399,7 @@ public class AozoraEpub3
                     //先頭からの場合で指定行数以降なら表紙無し
                     if ("".equals(coverFileName)) {
                         try {
-                            int maxCoverLine = Integer.parseInt(props.getProperty("MaxCoverLine"));
+                            int maxCoverLine = props.getInt("MaxCoverLine", 0);
                             if (maxCoverLine > 0 && bookInfo.firstImageLineNum >= maxCoverLine) {
                                 coverImageIndex = -1;
                                 coverFileName = null;
@@ -415,7 +417,7 @@ public class AozoraEpub3
                             coverFileName = srcFile.getParent()+"/"+coverFileName;
                             if (!new File(coverFileName).exists()) {
                                 coverFileName = null;
-                                LogAppender.println("[WARN] 表紙画像ファイルが見つかりません : "+coverFile.getAbsolutePath());
+                                logger.info("[WARN] 表紙画像ファイルが見つかりません : "+coverFile.getAbsolutePath());
                             }
                         }
                     }
@@ -491,8 +493,7 @@ public class AozoraEpub3
 
         } catch (Exception e) {
             e.printStackTrace();
-            LogAppender.append("エラーが発生しました : ");
-            LogAppender.println(e.getMessage());
+            logger.info("エラーが発生しました : " + e.getMessage());
         }
         return null;
     }
@@ -505,8 +506,7 @@ public class AozoraEpub3
     {
         try {
             long time = System.currentTimeMillis();
-            LogAppender.append("変換開始 : ");
-            LogAppender.println(srcFile.getPath());
+            logger.info("変換開始 : " + srcFile.getPath());
 
             //入力Stream再オープン
             BufferedReader src = null;
@@ -517,13 +517,13 @@ public class AozoraEpub3
             //ePub書き出し srcは中でクローズされる
             epubWriter.write(aozoraConverter, src, srcFile, ext, outFile, bookInfo, imageInfoReader);
 
-            LogAppender.append("変換完了["+(((System.currentTimeMillis()-time)/100)/10f)+"s] : ");
-            LogAppender.println(outFile.getPath());
+            logger.info("変換完了["+(((System.currentTimeMillis()-time)/100)/10f)+"s] : ");
+            logger.info(outFile.getPath());
 
         } catch (Exception e) {
             e.printStackTrace();
-            LogAppender.println("エラーが発生しました : "+e.getMessage());
-            //LogAppender.printStaclTrace(e);
+            logger.info("エラーが発生しました : " + e.getMessage());
+            //logger.printStaclTrace(e);
         }
     }
 
@@ -552,8 +552,7 @@ public class AozoraEpub3
                     return zis;
                 }
             }
-            LogAppender.append("zip内にtxtファイルがありません: ");
-            LogAppender.println(srcFile.getName());
+            logger.info("zip内にtxtファイルがありません: " + srcFile.getName());
             return null;
         } else if ("rar".equals(ext)) {
             //tempのtxtファイル作成
@@ -586,12 +585,10 @@ public class AozoraEpub3
             } finally {
                 archive.close();
             }
-            LogAppender.append("rar内にtxtファイルがありません: ");
-            LogAppender.println(srcFile.getName());
+            logger.info("rar内にtxtファイルがありません: " + srcFile.getName());
             return null;
         } else {
-            LogAppender.append("txt, zip, rar, txtz, cbz のみ変換可能です: ");
-            LogAppender.println(srcFile.getPath());
+            logger.info("txt, zip, rar, txtz, cbz のみ変換可能です: " + srcFile.getPath());
         }
         return null;
     }
@@ -624,8 +621,8 @@ public class AozoraEpub3
                     return cs;
                 }
             }
-            LogAppender.append("zip内にtxtファイルがありません: ");
-            LogAppender.println(srcFile.getName());
+            logger.info("zip内にtxtファイルがありません: ");
+            logger.info(srcFile.getName());
             return null;
         } else if ("rar".equals(ext)) {
             //tempのtxtファイル作成
@@ -660,12 +657,10 @@ public class AozoraEpub3
             } finally {
                 archive.close();
             }
-            LogAppender.append("rar内にtxtファイルがありません: ");
-            LogAppender.println(srcFile.getName());
+            logger.info("rar内にtxtファイルがありません: " + srcFile.getName());
             return null;
         } else {
-            LogAppender.append("txt, zip, rar, txtz, cbz のみ変換可能です: ");
-            LogAppender.println(srcFile.getPath());
+            logger.info("txt, zip, rar, txtz, cbz のみ変換可能です: " + srcFile.getPath());
         }
         return null;
     }

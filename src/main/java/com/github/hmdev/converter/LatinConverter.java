@@ -6,14 +6,12 @@ import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.logging.Logger;
 
-import com.github.hmdev.util.LogAppender;
-
 /**
  * 「基本ラテン文字のみによる拡張ラテン文字Aの分解表記」の変換クラス
  */
 public class LatinConverter
 {
-    static Logger logger = Logger.getLogger(LatinConverter.class.getName());
+    static Logger logger = Logger.getLogger("com.github.hmdev");
 
     /** 分解表記文字列→拡張ラテン文字の対応テーブル */
     HashMap<String, Character> latinMap = new HashMap<String, Character>();
@@ -36,7 +34,7 @@ public class LatinConverter
                         if (values[0].length() > 0) latinMap.put(values[0], ch);
                         if (values.length > 3) latinCidMap.put(ch, new String[]{values[2], values[3]});
                     } catch (Exception e) {
-                        LogAppender.error(lineNum, file, line);
+                        logger.severe(lineNum + " " + file + " " + line);
                     }
                 }
             }

@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.util.Vector;
+import java.util.logging.Logger;
 
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
@@ -19,7 +20,6 @@ import org.apache.velocity.app.Velocity;
 import com.github.hmdev.converter.AozoraEpub3Converter;
 import com.github.hmdev.info.ImageInfo;
 import com.github.hmdev.info.SectionInfo;
-import com.github.hmdev.util.LogAppender;
 import com.github.junrar.Archive;
 import com.github.junrar.exception.RarException;
 import com.github.junrar.rarfile.FileHeader;
@@ -29,6 +29,8 @@ import com.github.junrar.rarfile.FileHeader;
  */
 public class Epub3ImageWriter extends Epub3Writer
 {
+    static Logger logger = Logger.getLogger("com.github.hmdev");
+
     /** コピーのみのファイル */
     final static String[] TEMPLATE_FILE_NAMES_VERTICAL_IMAGE = {
         "META-INF/container.xml",
@@ -221,7 +223,7 @@ public class Epub3ImageWriter extends Epub3Writer
             imageInfo.setId(imageId);
             imageInfo.setOutFileName(imageId+"."+ext);
             if (!imageInfo.getExt().matches("^(png|jpeg|gif|jpg)$")) {
-                LogAppender.error(lineNum, "画像フォーマットエラー", srcImageFileName);
+                logger.severe(lineNum + " 画像フォーマットエラー " + srcImageFileName);
                 return null;
             }
             if (this.imageIndex-1 == bookInfo.coverImageIndex) {

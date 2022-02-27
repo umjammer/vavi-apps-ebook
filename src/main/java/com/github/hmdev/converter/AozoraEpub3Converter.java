@@ -23,7 +23,6 @@ import com.github.hmdev.info.BookInfo.TitleType;
 import com.github.hmdev.info.ChapterLineInfo;
 import com.github.hmdev.info.ImageInfo;
 import com.github.hmdev.util.CharUtils;
-import com.github.hmdev.util.LogAppender;
 import com.github.hmdev.util.ResourceList;
 import com.github.hmdev.writer.Epub3Writer;
 
@@ -32,7 +31,7 @@ import com.github.hmdev.writer.Epub3Writer;
  */
 public class AozoraEpub3Converter
 {
-    static Logger logger = Logger.getLogger(AozoraEpub3Converter.class.getName());
+    static Logger logger = Logger.getLogger("com.github.hmdev");
 
     //---------------- Properties ----------------//
     /** UTF-8以外の文字を代替文字に変換 */
@@ -343,7 +342,7 @@ public class AozoraEpub3Converter
                         }
 
                     } catch (Exception e) {
-                        LogAppender.error(lineNum, "chuki_tag.txt", line);
+                        logger.severe(lineNum + " chuki_tag.txt " + line);
                     }
                 }
             }
@@ -375,7 +374,7 @@ public class AozoraEpub3Converter
                         if (values.length > 3 && values[3].length() > 0) sufChukiMap.put(values[3]+values[0], tags);
 
                     } catch (Exception e) {
-                        LogAppender.error(lineNum, "chuki_tag_suf.txt", line);
+                        logger.severe(lineNum + " chuki_tag_suf.txt " + line);
                     }
                 }
             }
@@ -401,10 +400,10 @@ public class AozoraEpub3Converter
                             } else if (values[0].length() == 2) {
                                     replace2Map.put(values[0], values[1]);
                             } else {
-                                LogAppender.error(lineNum, "replace.txt too long ", line);
+                                logger.severe(lineNum + " replace.txt too long " + line);
                             }
                         } catch (Exception e) {
-                            LogAppender.error(lineNum, "replace.txt", line);
+                            logger.severe(lineNum + "replace.txt" + line);
                         }
                     }
                 }
@@ -422,7 +421,7 @@ public class AozoraEpub3Converter
         for (String fontFile : rs) {
             if (!fontFile.endsWith(File.separator)) {
                 String fileName = fontFile.substring(fontFile.lastIndexOf(File.separator) + 1).toLowerCase();
-                logger.info(fileName);
+                logger.fine("gaiji folder: " + fileName);
                 String ext = fileName.substring(fileName.lastIndexOf(".")+1);
                 if ("ttf".equals(ext) || "ttc".equals(ext) || "otf".equals(ext)) {
                     if (fileName.startsWith("u")){
@@ -430,7 +429,7 @@ public class AozoraEpub3Converter
                             String className = fileName.substring(1, fileName.length()-ext.length()-1);
                             String[] strs = className.split("-u");
                             if (strs.length > 2) {
-                                LogAppender.warn(-1, "IVS以外の合成フォントは対応しません: " + Arrays.toString(strs), fileName);
+                                logger.warning(-1 + " IVS以外の合成フォントは対応しません: " + Arrays.toString(strs) + " " + fileName);
                             } else {
                                 int[] codes = new int[]{Integer.parseInt(strs[0], 16), Integer.parseInt(strs[1], 16)};
                                 if (0xe0100 <= codes[1] && codes[1] <= 0xe01ef) {
@@ -440,7 +439,7 @@ public class AozoraEpub3Converter
                                         ivs32FontMap.put("u"+className, fontFile);
                                     }
                                 } else {
-                                    LogAppender.warn(-1, String.format("IVS以外の合成フォントは対応しません: %04x, %04x", codes[0], codes[1]), fileName);
+                                    logger.warning(-1 + String.format(" IVS以外の合成フォントは対応しません: %04x, %04x", codes[0], codes[1]) + " " + fileName);
                                 }
                             }
                         } else {
@@ -460,10 +459,10 @@ public class AozoraEpub3Converter
         if (utf32FontMap.size() == 0) utf32FontMap = null;
         if (ivs16FontMap.size() == 0) ivs16FontMap = null;
         if (ivs32FontMap.size() == 0) ivs32FontMap = null;
-        logger.info("utf16FontMap: " + (utf16FontMap != null ? utf16FontMap.size() : 0));
-        logger.info("utf32FontMap: " + (utf32FontMap != null ? utf32FontMap.size() : 0));
-        logger.info("ivs16FontMap: " + (ivs16FontMap != null ? ivs16FontMap.size() : 0));
-        logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0));
+logger.info("utf16FontMap: " + (utf16FontMap != null ? utf16FontMap.size() : 0));
+logger.info("utf32FontMap: " + (utf32FontMap != null ? utf32FontMap.size() : 0));
+logger.info("ivs16FontMap: " + (ivs16FontMap != null ? ivs16FontMap.size() : 0));
+logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0));
 
         inited = true;
     }
@@ -574,7 +573,7 @@ public class AozoraEpub3Converter
         if (!"".equals(chapterPattern))
             try {
                 this.chapterPattern = Pattern.compile(chapterPattern);
-            } catch (Exception e) { LogAppender.println("[WARN] 目次抽出のその他パターンが正しくありません: "+chapterPattern); }
+            } catch (Exception e) { logger.info("[WARN] 目次抽出のその他パターンが正しくありません: "+chapterPattern); }
     }
 
     public int getSpaceHyphenation()
@@ -671,19 +670,19 @@ public class AozoraEpub3Converter
             //コメント除外 50文字以上をコメントにする
             if (noRubyLine.startsWith("--------------------------------")) {
                 if (!noRubyLine.startsWith("--------------------------------------------------")) {
-                    LogAppender.warn(lineNum, "コメント行の文字数が足りません");
+                    logger.warning(lineNum + " コメント行の文字数が足りません");
                 } else {
                     if (firstCommentLineNum == -1) firstCommentLineNum = this.lineNum;
                     //コメントブロックに入ったらタイトル著者終了
                     firstCommentStarted = true;
                     if (inComment) {
                         //コメント行終了
-                        if (commentLineNum > 20) LogAppender.warn(lineNum, "コメントが "+commentLineNum+" 行 ("+(commentLineStart+1)+") -");
+                        if (commentLineNum > 20) logger.warning(lineNum + " コメントが "+commentLineNum + " 行 ("+(commentLineStart+1)+") -");
                         commentLineNum = 0;
                         inComment = false; continue;
                     }
                     else {
-                        if (lineNum > 10 && !(commentPrint && commentConvert)) LogAppender.warn(lineNum, "コメント開始行が10行目以降にあります");
+                        if (lineNum > 10 && !(commentPrint && commentConvert)) logger.warning(lineNum + " コメント開始行が10行目以降にあります");
                         //コメント行開始
                         commentLineStart = this.lineNum;
                         inComment = true;
@@ -944,7 +943,7 @@ public class AozoraEpub3Converter
         bookInfo.totalLineNum = lineNum;
 
         if (inComment) {
-            LogAppender.error(commentLineStart, "コメントが閉じていません");
+            logger.severe(commentLineStart + " コメントが閉じていません");
         }
 
         //表題と著者を先頭行から設定
@@ -974,7 +973,7 @@ public class AozoraEpub3Converter
         return bookInfo;
         } catch (Exception e) {
             e.printStackTrace();
-            LogAppender.error(lineNum, "");
+            logger.severe(lineNum + " " + e.getMessage());
             throw e;
         }
     }
@@ -988,7 +987,7 @@ public class AozoraEpub3Converter
     /** 文字が章の数字ならtrue */
     private boolean isChapterNum(char c)
     {
-        for (char num : this.chapterNumChar) {
+        for (char num : AozoraEpub3Converter.chapterNumChar) {
             if (c == num) return true;
         }
         return false;
@@ -996,7 +995,7 @@ public class AozoraEpub3Converter
     /** 文字が章の後の区切り文字ならtrue */
     private boolean isChapterSeparator(char c)
     {
-        for (char sep : this.chapterSeparator) {
+        for (char sep : AozoraEpub3Converter.chapterSeparator) {
             if (c == sep) return true;
         }
         return false;
@@ -1277,7 +1276,7 @@ public class AozoraEpub3Converter
 
         } catch (Exception e) {
             e.printStackTrace();
-            LogAppender.error(lineNum, "");
+            logger.severe(lineNum + " " + e.getMessage());
             throw e;
         }
     }
@@ -1371,7 +1370,7 @@ public class AozoraEpub3Converter
                 }
                 //外字注記変換をログに出力
                 if (gaiji != null) {
-                    //if (logged) LogAppender.info(lineNum, "外字注記", chuki+" → U+"+Integer.toHexString(AozoraGaijiConverter.toUtfCode(gaiji)));
+                    //if (logged) logger.info(lineNum, "外字注記", chuki+" → U+"+Integer.toHexString(AozoraGaijiConverter.toUtfCode(gaiji)));
                     if (gaiji.length() == 1 && escape) {
                         //特殊文字は 前に※をつけて文字出力時に例外処理
                         switch (gaiji.charAt(0)) {
@@ -1390,7 +1389,7 @@ public class AozoraEpub3Converter
                 //変換不可 画像指定付き外字なら画像注記に変更
                 if (hasInnerChuki(line, m.start())) {
                     gaiji = "〓";
-                    LogAppender.warn(lineNum, "外字注記内に注記があります", chuki);
+                    logger.warning(lineNum + " 外字注記内に注記があります " + chuki);
                 } else {
                     //画像指定外字
                     int imageStartIdx = chuki.indexOf('（', 2);
@@ -1399,7 +1398,7 @@ public class AozoraEpub3Converter
                         gaiji = chuki.substring(1, chuki.length()-1)+"#GAIJI#］";
                     } else {
                         //画像以外
-                        if (logged) LogAppender.info(lineNum, "外字未変換", chuki);
+                        if (logged) logger.info(lineNum + " 外字未変換 " + chuki);
                         gaiji = "〓［＃行右小書き］（"+chukiValues[0]+"）［＃行右小書き終わり］";
                     }
                 }
@@ -1470,7 +1469,7 @@ public class AozoraEpub3Converter
             if ("］".equals(tag)) {
                 //注記タグを出力
                 if (innerTagLevel <= 1) buf.append(tag);
-                else if (innerTagLevel == 2) LogAppender.warn(lineNum, "注記内に注記があります", line.substring(innerTagStart, mTagEnd));
+                else if (innerTagLevel == 2) logger.warning(lineNum + " 注記内に注記があります " + line.substring(innerTagStart, mTagEnd));
                 innerTagLevel--;
             } else {
                 innerTagLevel++;
@@ -1506,7 +1505,7 @@ public class AozoraEpub3Converter
                 buf.insert(chukiTagStart+chOffset, ruby);
                 chukiTagStart += ruby.length();
                 chukiTagEnd += ruby.length();
-                LogAppender.warn(lineNum, "ルビが注記の後ろにあります", ruby);
+                logger.warning(lineNum + " ルビが注記の後ろにあります " + ruby);
             }
 
             if (chuki.endsWith("の注記付き終わり")) {
@@ -1734,7 +1733,7 @@ public class AozoraEpub3Converter
         //キャプション指定の画像の場合はすぐにキャプションでなければ画像タグを閉じる
         if (this.nextLineIsCaption) {
             if (!line.startsWith("［＃キャプション］") && !line.startsWith("［＃ここからキャプション］")) {
-                LogAppender.warn(lineNum, "画像の次の行にキャプションがありません");
+                logger.warning(lineNum + " 画像の次の行にキャプションがありません");
                 buf.append(chukiMap.get("画像終わり")[0]);
                 buf.append("\n");
                 this.inImageTag = false;
@@ -1836,7 +1835,7 @@ public class AozoraEpub3Converter
                 buf.append(tags[0]);
                 if (wrcEndChar != 0) buf.append(wrcEndChar);
                 //長さ警告
-                if (wrcStart != -1 && chukiStart - wrcStart > 60) LogAppender.warn(lineNum, "割り注が長すぎます");
+                if (wrcStart != -1 && chukiStart - wrcStart > 60) logger.warning(lineNum + " 割り注が長すぎます");
                 //割り注終了
                 wrcStart = -1;
                 wrcStartChar = 0;
@@ -1883,7 +1882,7 @@ public class AozoraEpub3Converter
                 if (chukiFlagPageBreak.contains(chukiName) && !bookInfo.isNoPageBreakLine(lineNum)) {
                     //字下げ状態エラー出力
                     if (inJisage >= 0) {
-                        LogAppender.warn(inJisage, "字下げ注記省略");
+                        logger.warning(inJisage + " 字下げ注記省略");
                         buf.append(chukiMap.get("字下げ省略")[0]);
                         inJisage = -1;
                     }
@@ -1925,7 +1924,7 @@ public class AozoraEpub3Converter
                 //字下げフラグ処理
                 else if (chukiName.endsWith("字下げ")) {
                     if (inJisage >= 0) {
-                        LogAppender.warn(inJisage, "字下げ注記省略");
+                        logger.warning(inJisage + " 字下げ注記省略");
                         buf.append(chukiMap.get("字下げ省略")[0]);
                         inJisage = -1;
                     }
@@ -1935,7 +1934,7 @@ public class AozoraEpub3Converter
                 }
                 else if (chukiName.endsWith("字下げ終わり")) {
                     if (inJisage == -1) {
-                        LogAppender.info(lineNum, "字下げ終わり重複");
+                        logger.info(lineNum + " 字下げ終わり重複");
                         noTagAppend = true;
                     }
                     inJisage = -1;
@@ -1944,7 +1943,7 @@ public class AozoraEpub3Converter
                 else if (chukiName.startsWith("窓")) {
                     //注記以外の文字があるかチェック
                     if (!inMado && line.substring(0, chukiStart).replaceAll("［＃[^］]+］", "").replaceAll("^( |　)*$", "").length() > 0) {
-                        LogAppender.warn(lineNum, "行頭のみ対応: "+chukiName);
+                        logger.warning(lineNum + " 行頭のみ対応: "+chukiName);
                         noTagAppend = true;
                     } else {
                         if (inMado && chukiName.endsWith("終わり")) {
@@ -1976,7 +1975,7 @@ public class AozoraEpub3Converter
                     int wrcEnd = line.indexOf("［＃割り注終わり］", wrcStart);
                     if (wrcEnd == -1) wrcEnd = line.indexOf("［＃ここで割り注終わり］", wrcStart);
                     if (wrcEnd == -1) {
-                        LogAppender.error(lineNum, "割り注終わりなし");
+                        logger.severe(lineNum + " 割り注終わりなし");
                         wrcStart = -1;
                     } else {
                         //前後の 〔or（ があるかチェック 割り注注記の前もチェック
@@ -2079,14 +2078,14 @@ public class AozoraEpub3Converter
                         buf.append(chukiMap.get("行右小書き終わり")[0]);
                     } else if (chukiTag.indexOf('.', 2) == -1) {
                         //拡張子を含まない
-                        LogAppender.info(lineNum, "注記未変換", chukiTag);
+                        logger.info(lineNum + " 注記未変換 " + chukiTag);
                     } else {
                         //ダミー出力時は画像注記は無視
                         if (!noImage) {
                             //画像ファイル名置換処理実行
                             String srcFilePath = this.getImageChukiFileName(chukiTag, imageStartIdx);
                             if (srcFilePath == null) {
-                                LogAppender.error(lineNum, "注記エラー", chukiTag);
+                                logger.severe(lineNum + " 注記エラー " + chukiTag);
                             } else {
                                 srcFilePath = srcFilePath.trim();
                                 //外字のすぐ後ろがルビならルビ開始文字をチェックしてなければ外字の前に｜をつける(1文字のみ対応)
@@ -2097,7 +2096,7 @@ public class AozoraEpub3Converter
                                         else if (ch[i] == '》') i = -1;
                                     }
                                     if (!hasRubyStart) {
-                                        if (!chukiTag.endsWith("#GAIJI#］")) LogAppender.info(lineNum, "画像にルビ", srcFilePath);
+                                        if (!chukiTag.endsWith("#GAIJI#］")) logger.info(lineNum + "画像にルビ" + srcFilePath);
                                         buf.append('｜');
                                     }
                                 }
@@ -2109,7 +2108,7 @@ public class AozoraEpub3Converter
                                         //外字ファイルを出力対象に登録して連番を取得
                                         //String className = writer.addGaijiFontFile(srcFilePath);
                                         //buf.append("<span class=\"glyph ").append(className).append("\">").append('〓').append("</span>");
-                                        //LogAppender.info(lineNum, "外字フォント利用", srcFilePath);
+                                        //logger.info(lineNum, "外字フォント利用", srcFilePath);
                                     //} else {
                                      int orient = this.writer.getImageOrientation( srcFilePath);
                                         String imgFileName = writer.getImageFilePath(srcFilePath.trim(), lineNum);
@@ -2125,12 +2124,12 @@ public class AozoraEpub3Converter
                                             buf.append(String.format(chukiMap.get("縦長外字画像")[0], imgFileName));
                                             }
                                             //ログ出力
-                                            LogAppender.info(lineNum, "外字画像利用", srcFilePath);
+                                            logger.info(lineNum + " 外字画像利用 " + srcFilePath);
                                         }
                                     //}
                                 } else {
                                     if (noIllust && !writer.isCoverImage()) {
-                                        LogAppender.info(lineNum, "挿絵除外", chukiTag);
+                                        logger.info(lineNum + "挿絵除外" + chukiTag);
                                     } else {
                                         String dstFileName = writer.getImageFilePath(srcFilePath, lineNum);
                                         if (dstFileName != null) { //先頭に移動してここで出力しない場合はnull
@@ -2145,14 +2144,14 @@ public class AozoraEpub3Converter
                     }
                 } else if (lowerChukiTag.startsWith("<img")) {
                     if (noIllust && !writer.isCoverImage()) {
-                        LogAppender.info(lineNum, "挿絵除外", chukiTag);
+                        logger.info(lineNum + " 挿絵除外 " + chukiTag);
                     } else {
                         //ダミー出力時は画像注記は無視
                         if (!noImage) {
                             //src=の値抽出
                             String srcFilePath = this.getTagAttr(chukiTag, "src");
                             if (srcFilePath == null) {
-                                LogAppender.error(lineNum, "画像注記エラー", chukiTag);
+                                logger.severe(lineNum + " 画像注記エラー " + chukiTag);
                             } else {
                                 //単ページ画像の場合は<p>タグを出さない
                                 String dstFileName = writer.getImageFilePath(srcFilePath.trim(), lineNum);
@@ -2189,7 +2188,7 @@ public class AozoraEpub3Converter
                     if (m2.find()) {
                         //字下げフラグ処理
                         if (inJisage >= 0) {
-                            LogAppender.warn(inJisage, "字下げ注記省略");
+                            logger.warning(inJisage + " 字下げ注記省略");
                             buf.append(chukiMap.get("字下げ省略")[0]);
                         }
                         inJisage = lineNum;
@@ -2209,7 +2208,7 @@ public class AozoraEpub3Converter
                         if (m2.find()) {
                             //字下げフラグ処理
                             if (inJisage >= 0) {
-                                LogAppender.warn(inJisage, "字下げ注記省略");
+                                logger.warning(inJisage + " 字下げ注記省略");
                                 buf.append(chukiMap.get("字下げ省略")[0]);
                             }
                             inJisage = lineNum;
@@ -2230,7 +2229,7 @@ public class AozoraEpub3Converter
                         if (m2.find()) {
                             //字下げフラグ処理
                             if (inJisage >= 0) {
-                                LogAppender.warn(inJisage, "字下げ注記省略");
+                                logger.warning(inJisage + " 字下げ注記省略");
                                 buf.append(chukiMap.get("字下げ省略")[0]);
                             }
                             inJisage = lineNum;
@@ -2255,7 +2254,7 @@ public class AozoraEpub3Converter
                     if (!patternMatched) {
                         m2 = chukiPatternMap.get("字下げ終わり複合").matcher(chukiTag);
                         if (m2.find()) {
-                            if (inJisage == -1) LogAppender.error(lineNum, "字下げ注記エラー");
+                            if (inJisage == -1) logger.severe(lineNum + " 字下げ注記エラー");
                             else buf.append(chukiMap.get("ここで字下げ終わり")[0]);
                             inJisage = -1;
 
@@ -2267,7 +2266,7 @@ public class AozoraEpub3Converter
                     //注記未変換
                     if (!patternMatched) {
                         if (chukiTag.indexOf("底本では") == -1 && chukiTag.indexOf("に「ママ」") == -1 && chukiTag.indexOf("」はママ") == -1)
-                            LogAppender.info(lineNum, "注記未変換", chukiTag);
+                            logger.info(lineNum + " 注記未変換 " + chukiTag);
                     }
                 }
             }
@@ -2286,7 +2285,7 @@ public class AozoraEpub3Converter
             if (this.sectionCharLength > 0 && buf.length() > 2 && buf.charAt(0)=='底' && buf.charAt(1)=='本' && buf.charAt(2)=='：' ) {
                 //字下げ状態エラー出力
                 if (inJisage >= 0) {
-                    LogAppender.error(inJisage, "字下げ注記エラー");
+                    logger.severe(inJisage + " 字下げ注記エラー");
                 } else {
                     this.setPageBreakTrigger(pageBreakNoChapter);
                 }
@@ -2381,12 +2380,12 @@ public class AozoraEpub3Converter
         switch (ch[begin]) {
         case 0xDB40:
             begin+=2;
-            LogAppender.warn(lineNum, "先頭にあるIVSを除去します");
+            logger.warning(lineNum + " 先頭にあるIVSを除去します");
             break;
         case 0xFE00: case 0xFE01: case 0xFE02: case 0xFE03: case 0xFE04: case 0xFE05: case 0xFE06: case 0xFE07:
         case 0xFE08: case 0xFE09: case 0xFE0A: case 0xFE0B: case 0xFE0C: case 0xFE0D: case 0xFE0E: case 0xFE0F:
             begin++;
-            LogAppender.warn(lineNum, "先頭にあるIVSを除去します");
+            logger.warning(lineNum + " 先頭にあるIVSを除去します");
             break;
         }
 
@@ -2495,7 +2494,7 @@ public class AozoraEpub3Converter
                             if (rubyTopStart-rubyStart >= 30) {
                                 //タグは除去 面倒なので文字列で置換
                                 if (line.substring(rubyStart, rubyTopStart).replaceAll("<[^>]+>", " ").length() >= 30)
-                                    LogAppender.warn(lineNum, "ルビが長すぎます");
+                                    logger.warning(lineNum + " ルビが長すぎます");
                             }
                             //同じ長さで同じ文字なら一文字づつルビを振る
                             if (rubyTopStart-rubyStart == i-rubyTopStart-1 && CharUtils.isSameChars(ch, rubyTopStart+1, i)) {
@@ -2526,7 +2525,7 @@ public class AozoraEpub3Converter
                         }
                     }
                     if (rubyStart == -1 && !noRuby) {
-                        LogAppender.warn(lineNum, "ルビ開始文字無し");
+                        logger.warning(lineNum + " ルビ開始文字無し");
                     }
                     inRuby = false;
                     rubyStart = -1;
@@ -2624,7 +2623,7 @@ public class AozoraEpub3Converter
                         if (gaijiFileName != null) {
                             //フォントファイルを出力対象に追加して外字タグ出力
                             if (this.printGlyphFontTag(buf, gaijiFileName, className, '〓')) {
-                                LogAppender.info(lineNum, "外字フォント利用(IVS含む)", ""+ch[i]+ch[i+1]+ch[i+2]+ch[i+3]+"("+gaijiFileName+")");
+                                logger.info(lineNum + "外字フォント利用(IVS含む) "+ch[i]+ch[i+1]+ch[i+2]+ch[i+3]+"("+gaijiFileName+")");
                                 i+=3; //IVSの次へ
                                 continue;
                             }
@@ -2635,7 +2634,7 @@ public class AozoraEpub3Converter
                         gaijiFileName = utf32FontMap.get(code);
                         if (gaijiFileName != null) {
                             if (this.printGlyphFontTag(buf, gaijiFileName, "u"+Integer.toHexString(code), '〓')) {
-                                LogAppender.warn(lineNum, "外字フォント利用(IVS除外)", ""+ch[i]+ch[i+1]+"("+gaijiFileName+") -"+ivsCode);
+                                logger.warning(lineNum + " 外字フォント利用(IVS除外) "+ch[i]+ch[i+1]+"("+gaijiFileName+") -"+ivsCode);
                                 i+=3; //IVSの次へ
                                 continue;
                             }
@@ -2646,7 +2645,7 @@ public class AozoraEpub3Converter
                         //4バイト文字を出力しない
                         buf.append("〓");
                         i+=3; //IVSの次へ
-                        LogAppender.info(lineNum, "4バイト文字とIVSを除外", "-"+ch[i]+ch[i+1]+"("+Integer.toHexString(code)+"+"+ivsCode+")");
+                        logger.info(lineNum, "4バイト文字とIVSを除外", "-"+ch[i]+ch[i+1]+"("+Integer.toHexString(code)+"+"+ivsCode+")");
                         continue;
                     }*/
                     if (printIvsSSP) {
@@ -2656,13 +2655,13 @@ public class AozoraEpub3Converter
                         buf.append(ch[i+2]);
                         buf.append(ch[i+3]);
                         if (this.vertical) buf.append(chukiMap.get("正立終わり")[0]);
-                        LogAppender.info(lineNum, "拡張漢字＋IVSを出力します",
-                                ""+ch[i]+ch[i+1]+ch[i+2]+ch[i+3]+"(u+"+Integer.toHexString(code)+"+"+ivsCode+")");
+                        logger.info(lineNum + " 拡張漢字＋IVSを出力します " +
+                                    ch[i]+ch[i+1]+ch[i+2]+ch[i+3]+"(u+"+Integer.toHexString(code)+"+"+ivsCode+")");
                     } else {
                         buf.append(ch[i]);
                         buf.append(ch[i+1]);
-                        LogAppender.info(lineNum, "拡張漢字出力(IVS除外)",
-                                ""+ch[i]+ch[i+1]+"(u+"+Integer.toHexString(code)+") -"+ivsCode);
+                        logger.info(lineNum + " 拡張漢字出力(IVS除外) " +
+                                ch[i]+ch[i+1]+"(u+"+Integer.toHexString(code)+") -"+ivsCode);
                     }
                     i+=3; //IVSの次へ
                     continue;
@@ -2675,7 +2674,7 @@ public class AozoraEpub3Converter
                         if (gaijiFileName != null) {
                             //フォントファイルを出力対象に追加して外字タグ出力
                             if (this.printGlyphFontTag(buf, gaijiFileName, className, '〓')) {
-                                LogAppender.info(lineNum, "外字フォント利用(IVS含む)", ""+ch[i]+ch[i+1]+ch[i+2]+"("+gaijiFileName+")");
+                                logger.info(lineNum + " 外字フォント利用(IVS含む) " + ch[i]+ch[i+1]+ch[i+2]+"("+gaijiFileName+")");
                                 i+=2; //IVSの次へ
                                 continue;
                             }
@@ -2686,7 +2685,7 @@ public class AozoraEpub3Converter
                         //4バイト文字を出力しない
                         buf.append("〓");
                         i+=2; //IVSの次へ
-                        LogAppender.info(lineNum, "4バイト文字とIVSを除外", "-"+ch[i]+ch[i+1]+"("+Integer.toHexString(code)+"+"+(Integer.toHexString(ch[i+2]))+")");
+                        logger.info(lineNum, "4バイト文字とIVSを除外", "-"+ch[i]+ch[i+1]+"("+Integer.toHexString(code)+"+"+(Integer.toHexString(ch[i+2]))+")");
                         continue;
                     }*/
                     if (printIvsBMP) {
@@ -2695,13 +2694,11 @@ public class AozoraEpub3Converter
                         buf.append(ch[i+1]);
                         buf.append(ch[i+2]);
                         if (this.vertical) buf.append(chukiMap.get("正立終わり")[0]);
-                        LogAppender.info(lineNum, "拡張漢字＋IVSを出力します",
-                                ""+ch[i]+ch[i+1]+ch[i+2]+"(u+"+Integer.toHexString(code)+"+"+(Integer.toHexString(ch[i+2]))+")");
+                        logger.info(lineNum + " 拡張漢字＋IVSを出力します "+ch[i]+ch[i+1]+ch[i+2]+"(u+"+Integer.toHexString(code)+"+"+(Integer.toHexString(ch[i+2]))+")");
                     } else {
                         buf.append(ch[i]);
                         buf.append(ch[i+1]);
-                        LogAppender.info(lineNum, "拡張漢字出力(IVS除外)",
-                                ""+ch[i]+ch[i+1]+"(u+"+Integer.toHexString(code)+") -"+(Integer.toHexString(ch[i+2]))+")");
+                        logger.info(lineNum + " 拡張漢字出力(IVS除外) " + ch[i]+ch[i+1]+"(u+"+Integer.toHexString(code)+") -"+(Integer.toHexString(ch[i+2]))+")");
                     }
                     i+=2; //IVSの次へ
                     continue;
@@ -2711,7 +2708,7 @@ public class AozoraEpub3Converter
                     gaijiFileName = utf32FontMap.get(code);
                     if (gaijiFileName != null) {
                         if (this.printGlyphFontTag(buf, gaijiFileName, "u"+Integer.toHexString(code), '〓')) {
-                            LogAppender.info(lineNum, "外字フォント利用", ""+ch[i]+ch[i+1]+"("+gaijiFileName+")");
+                            logger.info(lineNum + " 外字フォント利用 "+ch[i]+ch[i+1]+"("+gaijiFileName+")");
                             i++; //次の文字へ
                             continue;
                         }
@@ -2724,7 +2721,7 @@ public class AozoraEpub3Converter
                 } else {*/
                     buf.append(ch[i]);
                     buf.append(ch[i+1]);
-                    LogAppender.info(lineNum, "拡張漢字出力", ""+ch[i]+ch[i+1]+"(u+"+Integer.toHexString(code)+")");
+                    logger.info(lineNum + " 拡張漢字出力 "+ch[i]+ch[i+1]+"(u+"+Integer.toHexString(code)+")");
                 /*}*/
                 i++; //次の文字へ
                 continue;
@@ -2742,7 +2739,7 @@ public class AozoraEpub3Converter
                     gaijiFileName = ivs16FontMap.get(className);
                     if (gaijiFileName != null) {
                         if (this.printGlyphFontTag(buf, gaijiFileName, className, '〓')) {
-                            LogAppender.info(lineNum, "外字フォント利用(IVS含む)", ""+ch[i]+ch[i+1]+ch[i+2]+"("+gaijiFileName+")");
+                            logger.info(lineNum + " 外字フォント利用(IVS含む) "+ch[i]+ch[i+1]+ch[i+2]+"("+gaijiFileName+")");
                             i+=2; //IVSの次へ
                             continue;
                         }
@@ -2752,7 +2749,7 @@ public class AozoraEpub3Converter
                     gaijiFileName = utf16FontMap.get((int)ch[i]);
                     if (gaijiFileName != null) {
                         if (this.printGlyphFontTag(buf, gaijiFileName, "u"+Integer.toHexString((int)ch[i]), '〓')) {
-                            LogAppender.warn(lineNum, "外字フォント利用(IVS除外)", ""+ch[i]+"("+gaijiFileName+") -"+ivsCode);
+                            logger.warning(lineNum + " 外字フォント利用(IVS除外) "+ch[i]+"("+gaijiFileName+") -"+ivsCode);
                             i+=2; //IVSの次へ
                             continue;
                         }
@@ -2765,11 +2762,11 @@ public class AozoraEpub3Converter
                     buf.append(ch[i+1]);
                     buf.append(ch[i+2]);
                     if (this.vertical) buf.append(chukiMap.get("正立終わり")[0]);
-                    LogAppender.info(lineNum, "IVSを出力します",
-                            ""+ch[i]+ch[i+1]+ch[i+2]+"(u+"+Integer.toHexString(ch[i])+"+"+ivsCode+")");
+                    logger.info(lineNum + " IVSを出力します " +
+                                ch[i]+ch[i+1]+ch[i+2]+"(u+"+Integer.toHexString(ch[i])+"+"+ivsCode+")");
                 } else {
                     buf.append(ch[i]);
-                    LogAppender.info(lineNum, "IVS除外",
+                    logger.info(lineNum + " IVS除外 " +
                             ch[i]+"(u+"+Integer.toHexString(ch[i])+") -"+ivsCode);
                 }
                 i+=2; //IVSの次へ
@@ -2782,7 +2779,7 @@ public class AozoraEpub3Converter
                     gaijiFileName = ivs32FontMap.get(className);
                     if (gaijiFileName != null) {
                         if (this.printGlyphFontTag(buf, gaijiFileName, className, '〓')) {
-                            LogAppender.info(lineNum, "外字フォント利用(IVS含む)", ""+ch[i]+"("+gaijiFileName+")");
+                            logger.info(lineNum + " 外字フォント利用(IVS含む) "+ch[i]+"("+gaijiFileName+")");
                             i++; //IVSの次へ
                             continue;
                         }
@@ -2793,7 +2790,7 @@ public class AozoraEpub3Converter
                     gaijiFileName = utf16FontMap.get((int)ch[i]);
                     if (gaijiFileName != null) {
                         if (this.printGlyphFontTag(buf, gaijiFileName, "u"+Integer.toHexString((int)ch[i]), '〓')) {
-                            LogAppender.info(lineNum, "外字フォント利用(IVS除外)", ""+ch[i]+"("+gaijiFileName+") -"+Integer.toHexString(ch[i+1]));
+                            logger.info(lineNum + " 外字フォント利用(IVS除外) "+ch[i]+"("+gaijiFileName+") -"+Integer.toHexString(ch[i+1]));
                             i++; //IVSの次へ
                             continue;
                         }
@@ -2804,10 +2801,10 @@ public class AozoraEpub3Converter
                 if (printIvsBMP) {
                     buf.append(ch[i]);
                     buf.append(ch[i+1]);
-                    LogAppender.info(lineNum, "IVSを出力します", ""+ch[i]+ch[i+1]+"(u+"+Integer.toHexString(ch[i])+"+"+Integer.toHexString(ch[i+1])+")");
+                    logger.info(lineNum + " IVSを出力します "+ch[i]+ch[i+1]+"(u+"+Integer.toHexString(ch[i])+"+"+Integer.toHexString(ch[i+1])+")");
                 } else {
                     buf.append(ch[i]);
-                    LogAppender.info(lineNum, "IVS除外",  ch[i]+"(u+"+Integer.toHexString(ch[i])+") -"+Integer.toHexString(ch[i+1]));
+                    logger.info(lineNum + " IVS除外 " + ch[i]+"(u+"+Integer.toHexString(ch[i])+") -"+Integer.toHexString(ch[i+1]));
                 }
                 i++; //IVSの次へ
                 continue;
@@ -2819,7 +2816,7 @@ public class AozoraEpub3Converter
                 gaijiFileName = utf16FontMap.get((int)ch[i]);
                 if (gaijiFileName != null) {
                     if (this.printGlyphFontTag(buf, gaijiFileName, "u"+Integer.toHexString((int)ch[i]), '〓')) {
-                        LogAppender.info(lineNum, "外字フォント利用", ""+ch[i]+"("+gaijiFileName+")");
+                        logger.info(lineNum + " 外字フォント利用 "+ch[i]+"("+gaijiFileName+")");
                         //次の文字へ
                         continue;
                     }
@@ -2974,7 +2971,7 @@ public class AozoraEpub3Converter
                             else className += "-u309a";
                             //if (this.printGlyphFontTag(buf, "dakuten/"+className+".ttf", className, '〓')) {
                             if (this.printGlyphFontTag(buf, "dakuten/"+className+".ttf", className, ch[i])) {
-                                LogAppender.info(lineNum, "濁点フォント利用", ""+ch[i]+ch[i+1]);
+                                logger.info(lineNum + " 濁点フォント利用 "+ch[i]+ch[i+1]);
                                 i++;
                                 continue;
                             }
@@ -3322,7 +3319,7 @@ public class AozoraEpub3Converter
             //ページ情報初期化
             this.pageByteSize = 0;
             this.sectionCharLength = 0;
-            if (tagLevel > 0) LogAppender.error(lineNum, "タグが閉じていません");
+            if (tagLevel > 0) logger.severe(lineNum +  " タグが閉じていません");
             this.tagLevel = 0;
             this.lineIdNum = 0;
 
