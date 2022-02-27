@@ -5,6 +5,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.StringWriter;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.github.hmdev.info.BookInfo;
@@ -18,8 +19,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class AozoraEpub3ConverterTest {
     static AozoraEpub3Converter converter;
 
-    @Test
-    public void test() throws IOException {
+    @BeforeEach
+    void setup() throws IOException {
         Epub3Writer writer = new Epub3Writer("");
         converter = new AozoraEpub3Converter(writer, "");
         converter.writer = new TestEpub3Writer("");
@@ -37,7 +38,7 @@ public class AozoraEpub3ConverterTest {
     }
 
     @Test
-    public void testConvertTextLineToEpub3() throws Exception {
+    void testConvertTextLineToEpub3() throws Exception {
         String str;
         str = converter
                 .convertTitleLineToEpub3(converter.convertGaijiChuki("｜ルビ※［＃米印］《るび》※［＃米印］※［＃始め二重山括弧］※［＃終わり二重山括弧］", true, true));
@@ -85,7 +86,7 @@ public class AozoraEpub3ConverterTest {
     }
 
     @Test
-    public void testConvertRubyText() throws IOException {
+    void testConvertRubyText() throws IOException {
         converter.vertical = true;
         StringBuilder buf;
         buf = converter.convertRubyText("※《29※》");
@@ -102,7 +103,7 @@ public class AozoraEpub3ConverterTest {
     }
 
     @Test
-    public void testConvertGaijiChuki() {
+    void testConvertGaijiChuki() {
         String str;
         str = converter.convertGaijiChuki("｜※［＃縦線］縦線※［＃縦線］《※［＃縦線］たてせん※［＃縦線］》", true, true);
         System.out.println(str);
@@ -126,7 +127,7 @@ public class AozoraEpub3ConverterTest {
     }
 
     @Test
-    public void testReplaceChukiSufTag() {
+    void testReplaceChukiSufTag() {
         String str;
 
         str = converter.replaceChukiSufTag(converter
@@ -207,7 +208,7 @@ public class AozoraEpub3ConverterTest {
     }
 
     @Test
-    public void testCheckTcyPrev() {
+    void testCheckTcyPrev() {
         String prev, cur, next;
         prev = "";
         cur = "10";
@@ -245,7 +246,7 @@ public class AozoraEpub3ConverterTest {
     }
 
     @Test
-    public void testCheckTcyNext() {
+    void testCheckTcyNext() {
         String prev, cur, next;
         prev = "";
         cur = "10";
