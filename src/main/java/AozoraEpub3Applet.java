@@ -3454,13 +3454,14 @@ public class AozoraEpub3Applet extends JApplet
             e1.printStackTrace();
         }
 
-//        LogAppender.append(encauto);
+//        logger.info(encauto);
         if (encauto==null)encauto="UTF-8";
          if (this.jComboEncType.getSelectedItem().toString().equals("AUTO")) {
              encType=encauto;
          }
         //BookInfo取得
         BookInfo bookInfo = null;
+logger.info("encType: " + encType);
         try {
             if (!imageOnly) {
                 //テキストファイルからメタ情報や画像単独ページ情報を取得
@@ -3771,7 +3772,8 @@ public class AozoraEpub3Applet extends JApplet
             srcFile, ext, outFile,
             this.aozoraConverter,
             writer,
-            this.jComboEncType.getSelectedItem().toString(),
+            this.jComboEncType.getSelectedItem().toString().equals("AUTO") ?
+                encType : this.jComboEncType.getSelectedItem().toString(),
             bookInfo, imageInfoReader, txtIdx
         );
         //設定を戻す
