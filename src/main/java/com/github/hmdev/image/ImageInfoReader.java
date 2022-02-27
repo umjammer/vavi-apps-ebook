@@ -341,8 +341,7 @@ public class ImageInfoReader
                 FileHeader fileHeader = archive.nextFileHeader();
                 while (fileHeader != null) {
                     if (!fileHeader.isDirectory()) {
-                        String entryName = fileHeader.getFileNameW();
-                        if (entryName.length() == 0) entryName = fileHeader.getFileNameString();
+                        String entryName = fileHeader.getFileName();
                         entryName = entryName.replace('\\', '/');
                         if (srcImageFileName.equals(entryName)) {
                             is = archive.getInputStream(fileHeader);

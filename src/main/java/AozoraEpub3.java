@@ -8,8 +8,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Properties;
 
-import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
@@ -81,7 +81,7 @@ public class AozoraEpub3
 
             CommandLine commandLine;
             try {
-                commandLine = new BasicParser().parse(options, args, true);
+                commandLine = new DefaultParser().parse(options, args, true);
             } catch (ParseException e) {
                 new HelpFormatter().printHelp(helpMsg, options);
                 return;
@@ -562,8 +562,7 @@ public class AozoraEpub3
             FileHeader fileHeader = archive.nextFileHeader();
             while (fileHeader != null) {
                 if (!fileHeader.isDirectory()) {
-                    String entryName = fileHeader.getFileNameW();
-                    if (entryName.length() == 0) entryName = fileHeader.getFileNameString();
+                    String entryName = fileHeader.getFileName();
                     entryName = entryName.replace('\\', '/');
                     if (entryName.substring(entryName.lastIndexOf('.')+1).equalsIgnoreCase("txt") && txtIdx-- == 0) {
                         if (imageInfoReader != null) imageInfoReader.setArchiveTextEntry(entryName);
@@ -635,8 +634,7 @@ public class AozoraEpub3
             FileHeader fileHeader = archive.nextFileHeader();
             while (fileHeader != null) {
                 if (!fileHeader.isDirectory()) {
-                    String entryName = fileHeader.getFileNameW();
-                    if (entryName.length() == 0) entryName = fileHeader.getFileNameString();
+                    String entryName = fileHeader.getFileName();
                     entryName = entryName.replace('\\', '/');
                     if (entryName.substring(entryName.lastIndexOf('.')+1).equalsIgnoreCase("txt") && txtIdx-- == 0) {
                         if (imageInfoReader != null) imageInfoReader.setArchiveTextEntry(entryName);
@@ -696,8 +694,7 @@ public class AozoraEpub3
         try {
             for (FileHeader fileHeader : archive.getFileHeaders()) {
                 if (!fileHeader.isDirectory()) {
-                    String entryName = fileHeader.getFileNameW();
-                    if (entryName.length() == 0) entryName = fileHeader.getFileNameString();
+                    String entryName = fileHeader.getFileName();
                     entryName = entryName.replace('\\', '/');
                     if (entryName.substring(entryName.lastIndexOf('.')+1).equalsIgnoreCase("txt")) txtCount++;
                 }
