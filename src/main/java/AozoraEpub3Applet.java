@@ -16,14 +16,10 @@ import java.awt.datatransfer.Transferable;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DropTarget;
 import java.awt.dnd.DropTargetAdapter;
-import java.awt.dnd.DropTargetDragEvent;
 import java.awt.dnd.DropTargetDropEvent;
-import java.awt.dnd.DropTargetEvent;
-import java.awt.dnd.DropTargetListener;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
@@ -45,6 +41,7 @@ import java.net.URL;
 import java.net.URLDecoder;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
@@ -52,7 +49,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Vector;
 import java.util.logging.Handler;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -356,7 +352,6 @@ public class AozoraEpub3Applet extends JApplet
     JButton jButtonCancel;
 
     /** 出力先選択ダイアログ表示イベントactionPerformed(null)で明示的に呼び出す。 */
-    DstPathChooserListener dstPathChooser;
 
     /** 青空→ePub3変換クラス */
     AozoraEpub3Converter aozoraConverter;
@@ -482,6 +477,7 @@ public class AozoraEpub3Applet extends JApplet
         ImageIcon tocIcon = new ImageIcon(AozoraEpub3Applet.class.getResource("images/toc.png"));
         ImageIcon styleIcon = new ImageIcon(AozoraEpub3Applet.class.getResource("images/style.png"));
         ImageIcon webIcon = new ImageIcon(AozoraEpub3Applet.class.getResource("images/web.png"));
+        @SuppressWarnings("unused")
         ImageIcon charIcon = new ImageIcon(AozoraEpub3Applet.class.getResource("images/char.png"));
 
         ButtonGroup buttonGroup;
@@ -617,7 +613,7 @@ public class AozoraEpub3Applet extends JApplet
                 if (iconName != null) {
                     try { menu.setIcon(new ImageIcon(AozoraEpub3Applet.class.getResource("images/"+iconName))); } catch (Exception r) {}
                 }
-                menu.addActionListener(new LoadPresetActionListener(presetProps));
+                menu.addActionListener(this::loadPreset);
                 jPopupPreset.add(menu);
             }
         }
@@ -720,7 +716,7 @@ public class AozoraEpub3Applet extends JApplet
         jButtonCover.setBorder(padding3);
         jButtonCover.setIcon(new ImageIcon(AozoraEpub3Applet.class.getResource("images/cover.png")));
         jButtonCover.setFocusPainted(false);
-        jButtonCover.addActionListener(new CoverChooserListener(this));
+        jButtonCover.addActionListener(this::chooseCover);
         panel.add(jButtonCover);
         jCheckCoverHistory = new JCheckBox("表紙履歴利用", true);
         jCheckCoverHistory.setToolTipText("前回の変換(またはスキップ)で設定した表紙を利用します ※履歴は再起動時に初期化されます");
@@ -825,7 +821,6 @@ public class AozoraEpub3Applet extends JApplet
         ////////////////////////////////
         //出力先 履歴をpropsから読み込んで設定
         ////////////////////////////////
-        dstPathChooser = new DstPathChooserListener(this);
 
         panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
@@ -871,7 +866,7 @@ public class AozoraEpub3Applet extends JApplet
         jButtonDstPath.setBorder(padding3);
         jButtonDstPath.setIcon(new ImageIcon(AozoraEpub3Applet.class.getResource("images/dst_path.png")));
         jButtonDstPath.setFocusPainted(false);
-        jButtonDstPath.addActionListener(dstPathChooser);
+        jButtonDstPath.addActionListener(this::chooseDstPath);
         panel.add(jButtonDstPath);
 
         ////////////////////////////////
@@ -954,7 +949,7 @@ public class AozoraEpub3Applet extends JApplet
         //jButtonFile.setPreferredSize(new Dimension(100, 24));
         jButtonFile.setIcon(new ImageIcon(AozoraEpub3Applet.class.getResource("images/convert.png")));
         jButtonFile.setFocusPainted(false);
-        jButtonFile.addActionListener(new FileChooserListener(this));
+        jButtonFile.addActionListener(this::chooseFile);
         panel2.add(jButtonFile);
         panel.add(panel2);
 
@@ -2140,7 +2135,7 @@ public class AozoraEpub3Applet extends JApplet
         jButtonCachePath.setBorder(padding2);
         jButtonCachePath.setIcon(new ImageIcon(AozoraEpub3Applet.class.getResource("images/dst_path.png")));
         jButtonCachePath.setFocusPainted(false);
-        jButtonCachePath.addActionListener(new CachePathChooserListener(jButtonCachePath));
+        jButtonCachePath.addActionListener(this::chooseCachePath);
         panel.add(jButtonCachePath);
 
         //未更新時のスキップ
@@ -2237,14 +2232,12 @@ public class AozoraEpub3Applet extends JApplet
         //メニュー
         JMenuItem jCopyMenu = new JMenuItem("コピー");
         jCopyMenu.setIcon(new ImageIcon(AozoraEpub3Applet.class.getResource("images/copy.png")));
-        jCopyMenu.addActionListener(ev ->
-            {
+        jCopyMenu.addActionListener(ev -> {
                 String selected = jTextArea.getSelectedText();
                 if (!"".equals(selected)) {
                     getToolkit().getSystemClipboard().setContents(new StringSelection(selected), null);
                 }
-            }
-        );
+            });
         JMenuItem jPasteMenu = new JMenuItem("貼り付け");
         jPasteMenu.setIcon(new ImageIcon(AozoraEpub3Applet.class.getResource("images/paste.png")));
         jPasteMenu.addActionListener(ev ->
@@ -2377,7 +2370,7 @@ public class AozoraEpub3Applet extends JApplet
 
         } catch (IOException e) {
             e.printStackTrace();
-            jTextArea.append(e.getMessage());
+            logger.warning(e.getMessage());
         }
 
         ////////////////////////////////////////////////////////////////
@@ -2387,8 +2380,8 @@ public class AozoraEpub3Applet extends JApplet
         String selectedProfileFileName = this.props.getProperty("ProfileFileName");
 
         //並び順取得
-        Vector<File> propFiles = new Vector<File>();
-        HashSet<String> profileFileNameMap = new HashSet<String>();
+        List<File> propFiles = new ArrayList<>();
+        HashSet<String> profileFileNameMap = new HashSet<>();
         if (this.props.containsKey("ProfileList")) {
             for (String fileName : this.props.getProperty("ProfileList").split(",")) {
                 File file = new File(profilePath.getPath()+"/"+fileName);
@@ -2457,14 +2450,13 @@ public class AozoraEpub3Applet extends JApplet
     }
 
     ////////////////////////////////////////////////////////////////
-    class TextSelectFocusListener implements FocusListener
+    class TextSelectFocusListener extends FocusAdapter
     {
         JTextField jTextField;
         TextSelectFocusListener(JTextField jTextField)
         {
             this.jTextField = jTextField;
         }
-        public void focusLost(FocusEvent e){}
         public void focusGained(FocusEvent e){this.jTextField.setSelectionStart(0);this.jTextField.setSelectionEnd(10);}
     }
     class IntegerInputVerifier extends InputVerifier
@@ -2603,54 +2595,27 @@ public class AozoraEpub3Applet extends JApplet
     }
 
     /** Preset選択イベント */
-    class LoadPresetActionListener implements ActionListener
-    {
-        Properties props;
-
-        LoadPresetActionListener(Properties props)
-        {
-            this.props = props;
-        }
-        @Override
-        public void actionPerformed(ActionEvent e)
+        public void loadPreset(ActionEvent e)
         {
             loadProperties(this.props);
         }
-    }
 
     /** 表紙選択ボタンイベント */
-    class CoverChooserListener implements ActionListener
-    {
-        Component parent;
-        private CoverChooserListener(Component parent)
-        {
-            this.parent = parent;
-        }
-        @Override
-        public void actionPerformed(ActionEvent e)
+    public void chooseCover(ActionEvent e)
         {
             JFileChooser fileChooser = new JFileChooser(currentPath);
             fileChooser.setDialogTitle("表紙画像を選択");
             fileChooser.setApproveButtonText("選択");
             fileChooser.setFileFilter(new FileNameExtensionFilter("表紙画像(jpg,png,gif)", new String[]{"jpg","png","gif"}));
-            int state = fileChooser.showOpenDialog(parent);
+            int state = fileChooser.showOpenDialog(this);
             switch (state) {
             case JFileChooser.APPROVE_OPTION:
                 jComboCover.setSelectedItem(fileChooser.getSelectedFile().getAbsolutePath());
             }
         }
-    }
 
     /** キャッシュパス選択ボタンイベント */
-    class CachePathChooserListener implements ActionListener
-    {
-        Component parent;
-        private CachePathChooserListener(Component parent)
-        {
-            this.parent = parent;
-        }
-        @Override
-        public void actionPerformed(ActionEvent e)
+    public void chooseCachePath(ActionEvent e)
         {
             File path = new File(jTextCachePath.getText());
             if (!path.isDirectory()) path = path.getParentFile();
@@ -2659,7 +2624,7 @@ public class AozoraEpub3Applet extends JApplet
             fileChooser.setDialogTitle("キャッシュ出力先を選択");
             fileChooser.setApproveButtonText("選択");
             fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-            int state = fileChooser.showOpenDialog(parent);
+            int state = fileChooser.showOpenDialog(this);
             switch (state) {
             case JFileChooser.APPROVE_OPTION:
                 String pathString = fileChooser.getSelectedFile().getAbsolutePath();
@@ -2673,19 +2638,10 @@ public class AozoraEpub3Applet extends JApplet
                 jTextCachePath.setText(pathString);
             }
         }
-    }
 
     /** 表紙画像ドラッグ＆ドロップイベント */
-    class DropCoverListener implements DropTargetListener
+    class DropCoverListener extends DropTargetAdapter
     {
-        @Override
-        public void dragEnter(DropTargetDragEvent dtde) {}
-        @Override
-        public void dragOver(DropTargetDragEvent dtde) {}
-        @Override
-        public void dropActionChanged(DropTargetDragEvent dtde) {}
-        @Override
-        public void dragExit(DropTargetEvent dte) {}
         @Override
         public void drop(DropTargetDropEvent dtde)
         {
@@ -2751,15 +2707,7 @@ public class AozoraEpub3Applet extends JApplet
     }
 
     /** 出力先選択ボタンイベント */
-    class DstPathChooserListener implements ActionListener
-    {
-        Component parent;
-        private DstPathChooserListener(Component parent)
-        {
-            this.parent = parent;
-        }
-        @Override
-        public void actionPerformed(ActionEvent e)
+    public void chooseDstPath(ActionEvent e)
         {
             File path = null;
             String dstPath = null;
@@ -2777,7 +2725,7 @@ public class AozoraEpub3Applet extends JApplet
             fileChooser.setDialogTitle("出力先を選択");
             fileChooser.setApproveButtonText("選択");
             fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-            int state = fileChooser.showOpenDialog(parent);
+            int state = fileChooser.showOpenDialog(this);
             switch (state) {
             case JFileChooser.APPROVE_OPTION:
                 String pathString = fileChooser.getSelectedFile().getAbsolutePath();
@@ -2786,18 +2734,9 @@ public class AozoraEpub3Applet extends JApplet
                 jComboDstPath.setSelectedItem(pathString);
             }
         }
-    }
 
     /** ファイル選択ボタンイベント */
-    class FileChooserListener implements ActionListener
-    {
-        Component parent;
-        private FileChooserListener(Component parent)
-        {
-            this.parent = parent;
-        }
-        @Override
-        public void actionPerformed(ActionEvent e)
+    public void chooseFile(ActionEvent e)
         {
             if (isRunning()) return;
 
@@ -2805,18 +2744,18 @@ public class AozoraEpub3Applet extends JApplet
             fileChooser.setDialogTitle("変換する青空文庫テキストを開く");
             fileChooser.setFileFilter(new FileNameExtensionFilter("青空文庫(txt,zip,rar,txtz),画像(zip,rar,cbz),ショートカット(url)", new String[]{"txt","zip","rar","cbz","txtz","url"}));
             fileChooser.setMultiSelectionEnabled(true);
-            int state = fileChooser.showOpenDialog(parent);
+            int state = fileChooser.showOpenDialog(this);
             switch (state) {
             case JFileChooser.APPROVE_OPTION:
 
-                Vector<File> vecFiles = new Vector<File>();
-                Vector<String> vecUrlString = null;
-                Vector<File> vecUrlSrcFile = null;
+                List<File> vecFiles = new ArrayList<>();
+                List<String> vecUrlString = null;
+                List<File> vecUrlSrcFile = null;
                 File dstPath = null;
                 try {
                 for (File file : fileChooser.getSelectedFiles()) {
                     if (file.getName().toLowerCase().endsWith(".url")) {
-                        if (vecUrlString == null) vecUrlString = new Vector<String>();
+                        if (vecUrlString == null) vecUrlString = new ArrayList<>();
                         vecUrlString.add(readInternetShortCut(file));
 //                        vecUrlSrcFile.add(file);
                         dstPath = file.getParentFile();
@@ -2831,19 +2770,12 @@ public class AozoraEpub3Applet extends JApplet
                 startConvertWorker(vecFiles, vecUrlString, vecUrlSrcFile, dstPath);
             }
         }
-    }
+
     /** ドラッグ＆ドロップイベント
      * 複数ファイルに対応 */
-    /*class DropListener implements DropTargetListener
+    /*
+    class DropListener extends DropTargetAdapter
     {
-        @Override
-        public void dragEnter(DropTargetDragEvent dtde) {}
-        @Override
-        public void dragOver(DropTargetDragEvent dtde) {}
-        @Override
-        public void dropActionChanged(DropTargetDragEvent dtde) {}
-        @Override
-        public void dragExit(DropTargetEvent dte) {}
         @Override
         public void drop(DropTargetDropEvent dtde)
         {
@@ -2852,8 +2784,8 @@ public class AozoraEpub3Applet extends JApplet
             dtde.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
             Transferable transfer = dtde.getTransferable();
             try {
-                Vector<File> vecFiles = new Vector<File>();
-                Vector<String> vecUrlString = null;
+                List<File> vecFiles = new ArrayList<File>();
+                List<String> vecUrlString = null;
                 File dstPath = null;
 
                 if (transfer.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
@@ -2863,7 +2795,7 @@ public class AozoraEpub3Applet extends JApplet
                     if (files.size() > 0) {
                         for (File file : files) {
                             if (file.getName().toLowerCase().endsWith(".url")) {
-                                if (vecUrlString == null) vecUrlString = new Vector<String>();
+                                if (vecUrlString == null) vecUrlString = new ArrayList<String>();
                                 vecUrlString.add(readInternetShortCut(file));
                                 dstPath = file.getParentFile();
                             } else {
@@ -2887,12 +2819,12 @@ public class AozoraEpub3Applet extends JApplet
                         //Linux等 ファイルのパスでファイルがあれば変換
                         try {
                             String[] fileNames = urlString.split("\n");
-                            vecFiles = new Vector<File>();
+                            vecFiles = new ArrayList<File>();
                             for (String path : fileNames) {
                                 File file = new File(URLDecoder.decode(path.substring(7).trim(),"UTF-8"));
                                 if (file.exists()) {
                                     if (file.getName().toLowerCase().endsWith(".url")) {
-                                        if (vecUrlString == null) vecUrlString = new Vector<String>();
+                                        if (vecUrlString == null) vecUrlString = new ArrayList<String>();
                                         vecUrlString.add(readInternetShortCut(file));
                                         dstPath = file.getParentFile();
                                     } else {
@@ -2907,7 +2839,7 @@ public class AozoraEpub3Applet extends JApplet
                     }
                     else if (urlString != null && urlString.toLowerCase().startsWith("http")) {
                         //ブラウザからのDnD
-                        vecUrlString = new Vector<String>();
+                        vecUrlString = new ArrayList<String>();
                         vecUrlString.add(urlString);
                         dstPath = null;
                     }
@@ -3019,11 +2951,11 @@ public class AozoraEpub3Applet extends JApplet
     {
         if (isRunning()) return false;
         try {
-            Vector<File> vecFiles = new Vector<File>();
+            List<File> vecFiles = new ArrayList<>();
             //Web変換対象URLを格納
-            Vector<String> vecUrlString = new Vector<String>();
+            List<String> vecUrlString = new ArrayList<>();
             //ショートカットファイルを格納(同名の表紙取得に利用)
-            Vector<File> vecUrlSrcFile = new Vector<File>();
+            List<File> vecUrlSrcFile = new ArrayList<>();
             File dstPath = null;
 
             if (transfer.isDataFlavorSupported(DataFlavor.stringFlavor)) {
@@ -3038,7 +2970,7 @@ public class AozoraEpub3Applet extends JApplet
                     //Linux等 ファイルのパスでファイルがあれば変換
                     try {
                         String[] fileNames = urlString.split("\n");
-                        vecFiles = new Vector<File>();
+                        vecFiles = new ArrayList<>();
                         for (String path : fileNames) {
                             File file = new File(URLDecoder.decode(path.substring(7).trim(),"UTF-8"));
                             if (file.exists()) {
@@ -3156,7 +3088,7 @@ public class AozoraEpub3Applet extends JApplet
     ////////////////////////////////////////////////////////////////
     /** 複数ファイルを変換
      * @param dstPath srcFileがキャッシュで入力ファイルを同じ場所に出力先指定をする場合 */
-    private void convertFiles(Vector<File> vecSrcFiles, File dstPath)
+    private void convertFiles(List<File> vecSrcFiles, File dstPath)
     {
         File[] srcFiles = new File[vecSrcFiles.size()];
         for (int i=0; i<srcFiles.length; i++) {
@@ -3847,7 +3779,7 @@ logger.info("encType: " + encType);
     /** Web変換
      * @param vecUrlString 青空文庫テキストのzipまたは対応サイトのリンクURL
      * @param vecUrlSrcFile ショートカットファイルのURLならファイルが指定されている */
-    private void convertWeb(Vector<String> vecUrlString, Vector<File> vecUrlSrcFile, File dstPath) throws IOException
+    private void convertWeb(List<String> vecUrlString, List<File> vecUrlSrcFile, File dstPath) throws IOException
     {
         for (int i=0; i<vecUrlString.size(); i++) {
             String urlString = vecUrlString.get(i);
@@ -3981,12 +3913,12 @@ logger.info("encType: " + encType);
     ////////////////////////////////////////////////////////////////
     /** 別スレッド実行用SwingWorkerを実行
      * @param dstPath 出力先 ブラウザからまたはURLペーストの場合はnull */
-    void startConvertWorker(Vector<File> vecFiles, Vector<String> vecUrlString, Vector<File> vecUrlSrcFile, File dstPath)
+    void startConvertWorker(List<File> vecFiles, List<String> vecUrlString, List<File> vecUrlSrcFile, File dstPath)
     {
         //出力先が指定されていない場合は選択させる
         if (dstPath == null && jCheckSamePath.isSelected() || !jCheckSamePath.isSelected() && "".equals(jComboDstPath.getEditor().getItem().toString().trim())) {
             if (dstPath != null) this.currentPath = dstPath;
-            dstPathChooser.actionPerformed(null);
+            chooseDstPath(null);
             if (jCheckSamePath.isSelected() || "".equals(jComboDstPath.getEditor().getItem().toString().trim())) {
                 logger.info("変換処理を中止しました : "+(vecFiles.size()>0?vecFiles.get(0).getAbsoluteFile():vecUrlString.size()>0?vecUrlString.get(0):""));
                 return;
@@ -4032,16 +3964,16 @@ logger.info("encType: " + encType);
         /** 面倒なのでAppletを渡す */
         AozoraEpub3Applet applet;
         /** 変換対象ファイル */
-        Vector<File> vecFiles;
+        List<File> vecFiles;
         /** 変換対象URL */
-        Vector<String> vecUrlString;
+        List<String> vecUrlString;
         /** ショートカットファイル */
-        Vector<File> vecUrlSrcFile;
+        List<File> vecUrlSrcFile;
 
         File dstPath = null;
 
         /** @param dstPath ショートカットファイルなら同じ場所出力用に指定 */
-        public ConvertWorker(Vector<File> vecFiles, Vector<String> vecUrlString, Vector<File> vecUrlSrcFile, File dstPath)
+        public ConvertWorker(List<File> vecFiles, List<String> vecUrlString, List<File> vecUrlSrcFile, File dstPath)
         {
             this.applet = getApplet();
 
@@ -4747,7 +4679,7 @@ logger.info("encType: " + encType);
         //引数にファイルが指定されていたら変換実行
         for (String fileName : args) {
             File file = new File(fileName);
-            Vector<File> vecFiles = new Vector<File>();
+            List<File> vecFiles = new ArrayList<>();
             if (file.exists()) vecFiles.add(file);
             if (vecFiles.size() > 0) {
                 File[] files = new File[vecFiles.size()];

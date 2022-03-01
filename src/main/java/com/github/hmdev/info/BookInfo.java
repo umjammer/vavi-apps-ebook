@@ -1,11 +1,14 @@
 package com.github.hmdev.info;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Vector;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -169,18 +172,18 @@ public class BookInfo
     //public int preTitlePageBreak = -2;
 
     /** 改ページ単位で区切られたセクションの情報を格納 */
-    //Vector<SectionInfo> vecSectionInfo;
+    //List<SectionInfo> vecSectionInfo;
 
     /** 画像単体ページ開始行 */
-    HashMap<Integer, String> mapImageSectionLine;
+    Map<Integer, String> mapImageSectionLine;
     /** 強制改ページ行 */
-    HashSet<Integer> mapPageBreakLine;
+    Set<Integer> mapPageBreakLine;
     /** 改ページしない行 (［＃ページの左右中央］の前の［＃改ページ］) */
-    HashSet<Integer> mapNoPageBreakLine;
+    Set<Integer> mapNoPageBreakLine;
     /** 出力ページしない行 (左右中央後の空行と改ページ前の空行) */
-    HashSet<Integer> mapIgnoreLine;
+    Set<Integer> mapIgnoreLine;
     /** 見出し行の情報 */
-    HashMap<Integer, ChapterLineInfo> mapChapterLine;
+    Map<Integer, ChapterLineInfo> mapChapterLine;
 
     ////////////////////////////////////////////////////////////////
     public BookInfo(File srcFile)
@@ -208,7 +211,7 @@ public class BookInfo
     /** 画像単体ページの行数を保存 */
     public void addImageSectionLine(int lineNum, String imageFileName)
     {
-        if (this.mapImageSectionLine == null) this.mapImageSectionLine = new HashMap<Integer, String>();
+        if (this.mapImageSectionLine == null) this.mapImageSectionLine = new HashMap<>();
         this.mapImageSectionLine.put(lineNum, imageFileName);
     }
     /** 画像単体ページの行ならtrue */
@@ -227,7 +230,7 @@ public class BookInfo
     /** 強制改ページ行数を保存 */
     public void addPageBreakLine(int lineNum)
     {
-        if (this.mapPageBreakLine == null) this.mapPageBreakLine = new HashSet<Integer>();
+        if (this.mapPageBreakLine == null) this.mapPageBreakLine = new HashSet<>();
         this.mapPageBreakLine.add(lineNum);
     }
     /** 強制改ページ行ならtrue */
@@ -240,7 +243,7 @@ public class BookInfo
     /** 改ページしない行数を保存 */
     public void addNoPageBreakLine(int lineNum)
     {
-        if (this.mapNoPageBreakLine == null) this.mapNoPageBreakLine = new HashSet<Integer>();
+        if (this.mapNoPageBreakLine == null) this.mapNoPageBreakLine = new HashSet<>();
         this.mapNoPageBreakLine.add(lineNum);
     }
     /** 改ページしない行ならtrue */
@@ -253,7 +256,7 @@ public class BookInfo
     /** 出力しない行数を保存 */
     public void addIgnoreLine(int lineNum)
     {
-        if (this.mapIgnoreLine == null) this.mapIgnoreLine = new HashSet<Integer>();
+        if (this.mapIgnoreLine == null) this.mapIgnoreLine = new HashSet<>();
         this.mapIgnoreLine.add(lineNum);
     }
     /** 出力しない行ならtrue */
@@ -266,7 +269,7 @@ public class BookInfo
     /** 見出し行と階層レベルを保存 */
     public void addChapterLineInfo(ChapterLineInfo chapterLineInfo)
     {
-        if (this.mapChapterLine == null) this.mapChapterLine = new HashMap<Integer, ChapterLineInfo>();
+        if (this.mapChapterLine == null) this.mapChapterLine = new HashMap<>();
         this.mapChapterLine.put(chapterLineInfo.lineNum, chapterLineInfo);
     }
     /** 見出し行と削除 */
@@ -290,9 +293,9 @@ public class BookInfo
     }
 
     /** 行番号順に並び替えた目次一覧リストを生成して返す */
-    public Vector<ChapterLineInfo> getChapterLineInfoList()
+    public List<ChapterLineInfo> getChapterLineInfoList()
     {
-        Vector<ChapterLineInfo> list = new Vector<ChapterLineInfo>();
+        List<ChapterLineInfo> list = new ArrayList<>();
 
         if (this.mapChapterLine == null) return list;
 
@@ -313,7 +316,7 @@ public class BookInfo
     {
         if (this.mapChapterLine == null) return;
         //前2行と後ろ2行が自動抽出見出しの行を抽出 間の行は空行のみ許可
-        HashSet<Integer> excludeLine = new HashSet<Integer>();
+        HashSet<Integer> excludeLine = new HashSet<>();
         for (Integer lineNum : this.mapChapterLine.keySet()) {
             if (this.isPattern(lineNum)) {
                 boolean prevIsPattern = false;
@@ -326,7 +329,7 @@ public class BookInfo
             }
         }
         //先頭と最後
-        HashSet<Integer> excludeLine2 = new HashSet<Integer>();
+        HashSet<Integer> excludeLine2 = new HashSet<>();
         for (Integer lineNum : this.mapChapterLine.keySet()) {
             if (!excludeLine.contains(lineNum) && this.isPattern(lineNum)) {
                 if (excludeLine.contains(lineNum-1)) excludeLine2.add(lineNum);

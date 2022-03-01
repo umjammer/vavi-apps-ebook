@@ -14,11 +14,12 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Vector;
+import java.util.Map;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
@@ -41,14 +42,14 @@ public class WebAozoraConverter
     final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 
     /** Singletonインスタンス格納 keyはFQDN */
-    static HashMap<String, WebAozoraConverter> converters = new HashMap<String, WebAozoraConverter>();
+    static Map<String, WebAozoraConverter> converters = new HashMap<>();
 
     //設定ファイルから読み込むパラメータ
     /** リストページ抽出対象 HashMap<String key, String[]{cssQuery1, cssQuery2}> キーとJsoupのcssQuery(or配列) */
-    HashMap<ExtractId, ExtractInfo[]> queryMap;
+    Map<ExtractId, ExtractInfo[]> queryMap;
 
     /** 出力文字列置換情報 */
-    HashMap<ExtractId, Vector<String[]>> replaceMap;
+    Map<ExtractId, List<String[]>> replaceMap;
 
     /** テキスト出力先パス 末尾は/ */
     String dstPath;
@@ -117,7 +118,7 @@ public class WebAozoraConverter
                     //抽出情報
                     File extractInfoFile = new File(configPath.getAbsolutePath()+"/"+fqdn+"/extract.txt");
                     if (!extractInfoFile.isFile()) return;
-                    this.queryMap = new HashMap<ExtractId, ExtractInfo[]>();
+                    this.queryMap = new HashMap<>();
                     String line;
                     BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(extractInfoFile), "UTF-8"));
                     try {
@@ -139,7 +140,7 @@ public class WebAozoraConverter
                     }
 
                     //置換情報
-                    this.replaceMap = new HashMap<ExtractId, Vector<String[]>>();
+                    this.replaceMap = new HashMap<>();
                     File replaceInfoFile = new File(configPath.getAbsolutePath()+"/"+fqdn+"/replace.txt");
                     if (replaceInfoFile.isFile()) {
                         br = new BufferedReader(new InputStreamReader(new FileInputStream(replaceInfoFile), "UTF-8"));
@@ -149,9 +150,9 @@ public class WebAozoraConverter
                                 String[] values = line.split("\t");
                                 if (values.length > 1) {
                                     ExtractId extractId = ExtractId.valueOf(values[0]);
-                                    Vector<String[]> vecReplace = this.replaceMap.get(extractId);
+                                    List<String[]> vecReplace = this.replaceMap.get(extractId);
                                     if (vecReplace == null) {
-                                        vecReplace = new Vector<String[]>();
+                                        vecReplace = new ArrayList<>();
                                         this.replaceMap.put(extractId, vecReplace);
                                     }
                                     vecReplace.add(new String[]{values[1], values.length==2?"":values[2]});
@@ -345,14 +346,14 @@ public class WebAozoraConverter
             String preChapterTitle = "";
 
             //各話のURL(フルパス)を格納
-            Vector<String> chapterHrefs = new Vector<String>();
+            List<String> chapterHrefs = new ArrayList<>();
 
             Elements hrefs = getExtractElements(doc, this.queryMap.get(ExtractId.HREF));
             if (hrefs == null && this.queryMap.containsKey(ExtractId.HREF)) {
                 logger.info("HREF : 各話のリンク先URLが取得できません");
             }
 
-            Vector<String> subtitles = getExtractStrings(doc, this.queryMap.get(ExtractId.SUBTITLE_LIST), true);
+            List<String> subtitles = getExtractStrings(doc, this.queryMap.get(ExtractId.SUBTITLE_LIST), true);
             if (subtitles == null && this.queryMap.containsKey(ExtractId.SUBTITLE_LIST)) {
                 logger.info("SUBTITLE_LIST : 各話タイトルが取得できません");
             }
@@ -442,7 +443,7 @@ public class WebAozoraConverter
                 //更新されていない最後の話数 0～
                 int lastNoModifiedChapterIdx = -1;
                 if (this.convertModifiedOnly) {
-                    modifiedChapterIdx = new HashSet<Integer>();
+                    modifiedChapterIdx = new HashSet<>();
                 }
 
                 int chapterIdx = 0;
@@ -539,7 +540,7 @@ public class WebAozoraConverter
                     //最新話数指定
                     if (this.beforeChapter > 0) {
                         int idx = chapterHrefs.size()-1;
-                        modifiedChapterIdx = new HashSet<Integer>();
+                        modifiedChapterIdx = new HashSet<>();
                         for (int i=0; i<this.beforeChapter; i++) {
                             modifiedChapterIdx.add(idx--);
                         }
@@ -631,7 +632,7 @@ public class WebAozoraConverter
     /** 更新情報の生成と保存 */
     private HashSet<String> createNoUpdateUrls(File updateInfoFile, String urlString, String listBaseUrl, String contentsUpdate, Elements hrefs, Elements updates) throws IOException
     {
-        HashMap<String, String> updateStringMap = new HashMap<String, String>();
+        HashMap<String, String> updateStringMap = new HashMap<>();
 
         if (hrefs == null || updates == null || hrefs.size() != updates.size()) {
 
@@ -684,7 +685,7 @@ public class WebAozoraConverter
             }
         }
 
-        HashSet<String> noUpdateUrls = new HashSet<String>();
+        HashSet<String> noUpdateUrls = new HashSet<>();
         int i = -1;
         for (Element href : hrefs) {
             i++;
@@ -1044,13 +1045,13 @@ public class WebAozoraConverter
         return null;
     }
 
-    Vector<String> getExtractStrings(Document doc, ExtractInfo[] extractInfos, boolean replace)
+    List<String> getExtractStrings(Document doc, ExtractInfo[] extractInfos, boolean replace)
     {
         if (extractInfos == null) return null;
         for (ExtractInfo extractInfo : extractInfos) {
             Elements elements = doc.select(extractInfo.query);
             if (elements == null || elements.size() == 0) continue;
-            Vector<String> vecString = new Vector<String>();
+            List<String> vecString = new ArrayList<>();
             if (extractInfo.idx == null) {
                 for (Element element : elements) {
                     String html = element.html();

@@ -14,10 +14,10 @@ public class LatinConverter
     static Logger logger = Logger.getLogger("com.github.hmdev");
 
     /** 分解表記文字列→拡張ラテン文字の対応テーブル */
-    HashMap<String, Character> latinMap = new HashMap<String, Character>();
+    HashMap<String, Character> latinMap = new HashMap<>();
     /** 分解表記文字列→CIDコードの対応テーブル
      * int[]{横書き時のグリフのCID, 縦書き時(右90度)のグリフのCID} */
-    HashMap<Character, String[]> latinCidMap = new HashMap<Character, String[]>();
+    HashMap<Character, String[]> latinCidMap = new HashMap<>();
 
     public LatinConverter(String file) throws IOException
     {

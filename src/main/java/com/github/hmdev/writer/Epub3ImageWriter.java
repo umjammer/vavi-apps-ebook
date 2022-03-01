@@ -8,7 +8,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 
 import org.apache.commons.compress.archivers.ArchiveEntry;
@@ -69,7 +70,7 @@ public class Epub3ImageWriter extends Epub3Writer
     @Override
     void writeSections(AozoraEpub3Converter converter, BufferedReader src, BufferedWriter bw, File srcFile, String srcExt, ZipArchiveOutputStream zos) throws IOException, RarException
     {
-        Vector<String> vecFileName = new Vector<>();
+        List<String> vecFileName = new ArrayList<>();
         //ファイル名取得してImageInfoのIDを設定
         int pageNum = 0;
         for (String srcFilePath : this.imageInfoReader.getImageFileNames()) {

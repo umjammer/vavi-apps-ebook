@@ -6,15 +6,13 @@ import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.Point;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
-import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
-import java.util.Vector;
+import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -57,7 +55,7 @@ public class JConfirmDialog extends JDialog
     JTextField jTextDstFileName;
 
     /** 表題再取得 順番 */
-    JComboBox jComboTitle;
+    JComboBox<String> jComboTitle;
     JCheckBox jCheckPubFirst;
     /** 表題再取得 順番 */
     JButton jButtonTitle;
@@ -239,7 +237,7 @@ public class JConfirmDialog extends JDialog
         panel.setBorder(padding4T);
         label = new JLabel("本文内");
         panel.add(label);
-        jComboTitle = new JComboBox(BookInfo.TitleType.titleTypeNames);
+        jComboTitle = new JComboBox<>(BookInfo.TitleType.titleTypeNames);
         jComboTitle.setFocusable(false);
         jComboTitle.setMaximumSize(new Dimension(200, 22));
         jComboTitle.setPreferredSize(new Dimension(200, 22));
@@ -254,15 +252,15 @@ public class JConfirmDialog extends JDialog
         jButtonTitle.setBorder(padding3);
         jButtonTitle.setPreferredSize(new Dimension(72, 24));
         try { jButtonTitle.setIcon(new ImageIcon(new URL(imageURLPath+"title_reload.png"))); } catch (MalformedURLException e1) {}
-        jButtonTitle.addActionListener(new ActionListener() {public void actionPerformed(ActionEvent arg0) { reloadTitle(); } });
+        jButtonTitle.addActionListener(ev -> { reloadTitle(); });
         panel.add(jButtonTitle);
         panel.add(new JLabel("   "));
         jButtonTitleFileName = new JButton();
         jButtonTitleFileName.setToolTipText("ファイル名から設定");
         jButtonTitleFileName.setBorder(BorderFactory.createEmptyBorder(3, 6, 3, 6));
         jButtonTitleFileName.setPreferredSize(new Dimension(130, 24));
-        try { jButtonTitleFileName.setIcon(new ImageIcon(new URL(imageURLPath+"filename_copy.png"))); } catch (MalformedURLException e1) {}
-        jButtonTitleFileName.addActionListener(new ActionListener() { public void actionPerformed(ActionEvent arg0) { userFileName(); } });
+        try { jButtonTitleFileName.setIcon(new ImageIcon(URI.create(imageURLPath+"filename_copy.png").toURL())); } catch (MalformedURLException e1) {}
+        jButtonTitleFileName.addActionListener(ev -> { userFileName(); });
         panel.add(jButtonTitleFileName);
         panel.add(new JLabel("     "));
         metadataOuter.add(panel);
@@ -348,10 +346,8 @@ public class JConfirmDialog extends JDialog
         jButton.setBorder(paddingButton);
         jButton.setPreferredSize(new Dimension(80, 26));
         try { jButton.setIcon(new ImageIcon(new URL(imageURLPath+"apply.png"))); } catch (MalformedURLException e1) {}
-        jButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
+        jButton.addActionListener(e -> {
                 convert();
-            }
         });
         panel.add(jButton);
         buttonPanel.add(panel);
@@ -361,10 +357,8 @@ public class JConfirmDialog extends JDialog
         jButton.setBorder(paddingButton);
         jButton.setPreferredSize(new Dimension(80, 26));
         try { jButton.setIcon(new ImageIcon(new URL(imageURLPath+"skip.png"))); } catch (MalformedURLException e1) {}
-        jButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
+        jButton.addActionListener(e -> {
                 skip();
-            }
         });
 
         panel.add(jButton);
@@ -376,10 +370,8 @@ public class JConfirmDialog extends JDialog
         jButton.setBorder(paddingButton);
         jButton.setPreferredSize(new Dimension(80, 26));
         try { jButton.setIcon(new ImageIcon(new URL(imageURLPath+"cancel.png"))); } catch (MalformedURLException e1) {}
-        jButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
+        jButton.addActionListener(e -> {
                 cancel();
-            }
         });
         panel.add(jButton);
         buttonPanel.add(panel);
@@ -401,47 +393,47 @@ public class JConfirmDialog extends JDialog
         jCheckChapterAll = new JCheckBox("全");
         jCheckChapterAll.setFocusPainted(false);
         jCheckChapterAll.setBorder(padding2H);
-        jCheckChapterAll.addActionListener(new ActionListener() {public void actionPerformed(ActionEvent e){ selectChapterAll(jCheckChapterAll.isSelected()); } });
+        jCheckChapterAll.addActionListener(ev -> { selectChapterAll(jCheckChapterAll.isSelected()); });
         panel.add(jCheckChapterAll);
         jCheckChapterSection = new JCheckBox("改");
         jCheckChapterSection.setFocusPainted(false);
         jCheckChapterSection.setBorder(padding2H);
-        jCheckChapterSection.addActionListener(new ActionListener() {public void actionPerformed(ActionEvent e){ selectChapterType(ChapterLineInfo.TYPE_PAGEBREAK); } });
+        jCheckChapterSection.addActionListener(ev -> { selectChapterType(ChapterLineInfo.TYPE_PAGEBREAK); });
         panel.add(jCheckChapterSection);
         jCheckChapterH = new JCheckBox("見");
         jCheckChapterH.setFocusPainted(false);
         jCheckChapterH.setBorder(padding2H);
-        jCheckChapterH.addActionListener(new ActionListener() {public void actionPerformed(ActionEvent e){ selectChapterType(ChapterLineInfo.TYPE_CHUKI_H); } });
+        jCheckChapterH.addActionListener(ev -> { selectChapterType(ChapterLineInfo.TYPE_CHUKI_H); });
         panel.add(jCheckChapterH);
         jCheckChapterH1 = new JCheckBox("大");
         jCheckChapterH1.setFocusPainted(false);
         jCheckChapterH1.setBorder(padding2H);
-        jCheckChapterH1.addActionListener(new ActionListener() {public void actionPerformed(ActionEvent e){ selectChapterType(ChapterLineInfo.TYPE_CHUKI_H1); } });
+        jCheckChapterH1.addActionListener(ev -> { selectChapterType(ChapterLineInfo.TYPE_CHUKI_H1); });
         panel.add(jCheckChapterH1);
         jCheckChapterH2 = new JCheckBox("中");
         jCheckChapterH2.setFocusPainted(false);
         jCheckChapterH2.setBorder(padding2H);
-        jCheckChapterH2.addActionListener(new ActionListener() {public void actionPerformed(ActionEvent e){ selectChapterType(ChapterLineInfo.TYPE_CHUKI_H2); } });
+        jCheckChapterH2.addActionListener(ev -> { selectChapterType(ChapterLineInfo.TYPE_CHUKI_H2); });
         panel.add(jCheckChapterH2);
         jCheckChapterH3 = new JCheckBox("小");
         jCheckChapterH3.setFocusPainted(false);
         jCheckChapterH3.setBorder(padding2H);
-        jCheckChapterH3.addActionListener(new ActionListener() {public void actionPerformed(ActionEvent e){ selectChapterType(ChapterLineInfo.TYPE_CHUKI_H3); } });
+        jCheckChapterH3.addActionListener(ev -> { selectChapterType(ChapterLineInfo.TYPE_CHUKI_H3); });
         panel.add(jCheckChapterH3);
         jCheckChapterName = new JCheckBox("章");
         jCheckChapterName.setFocusPainted(false);
         jCheckChapterName.setBorder(padding2H);
-        jCheckChapterName.addActionListener(new ActionListener() {public void actionPerformed(ActionEvent e){ selectChapterType(ChapterLineInfo.TYPE_CHAPTER_NAME); } });
+        jCheckChapterName.addActionListener(ev -> { selectChapterType(ChapterLineInfo.TYPE_CHAPTER_NAME); });
         panel.add(jCheckChapterName);
         jCheckChapterNum = new JCheckBox("数");
         jCheckChapterNum.setFocusPainted(false);
         jCheckChapterNum.setBorder(padding2H);
-        jCheckChapterNum.addActionListener(new ActionListener() {public void actionPerformed(ActionEvent e){ selectChapterType(ChapterLineInfo.TYPE_CHAPTER_NUM); } });
+        jCheckChapterNum.addActionListener(ev -> { selectChapterType(ChapterLineInfo.TYPE_CHAPTER_NUM); });
         panel.add(jCheckChapterNum);
         jCheckChapterPattern = new JCheckBox("他");
         jCheckChapterPattern.setFocusPainted(false);
         jCheckChapterPattern.setBorder(padding2H);
-        jCheckChapterPattern.addActionListener(new ActionListener() {public void actionPerformed(ActionEvent e){ selectChapterType(ChapterLineInfo.TYPE_PATTERN); } });
+        jCheckChapterPattern.addActionListener(ev -> { selectChapterType(ChapterLineInfo.TYPE_PATTERN); });
         panel.add(jCheckChapterPattern);
         previewLeft.add(panel);
 
@@ -470,9 +462,7 @@ public class JConfirmDialog extends JDialog
         jCoverImagePanel.setSize(size);
         previewOuterPane.add(jCoverImagePanel);
 
-        jCoverImagePanel.addActionListener(new ActionListener(){
-            @Override
-            public void actionPerformed(ActionEvent evt) {
+        jCoverImagePanel.addActionListener(evt -> {
                 switch (evt.getID()) {
                 case JCoverImagePanel.EVT_DBLCLICK:
                     jButtonScale.setSelected(!jButtonScale.isSelected()); setCoverPaneSize(jButtonScale.isSelected()?2:1);
@@ -490,7 +480,6 @@ public class JConfirmDialog extends JDialog
                     break;
                 }
                 repaint();
-            }
         });
 
         //操作パネル
@@ -505,10 +494,7 @@ public class JConfirmDialog extends JDialog
         jButtonFirst.setToolTipText("先頭の画像");
         jButtonFirst.setFocusable(false);
         try { jButtonFirst.setIcon(new ImageIcon(new URL(imageURLPath+"first.png"))); } catch (MalformedURLException e1) {}
-        jButtonFirst.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent arg0) { movePreviewImage(-100000); }
-        });
+        jButtonFirst.addActionListener(ev -> { movePreviewImage(-100000); });
         panel.add(jButtonFirst);
         jButtonPrev = new JButton();
         jButtonPrev.setBorder(padding0);
@@ -516,10 +502,7 @@ public class JConfirmDialog extends JDialog
         jButtonPrev.setToolTipText("前の画像 (PageUp)");
         jButtonPrev.setFocusable(false);
         try { jButtonPrev.setIcon(new ImageIcon(new URL(imageURLPath+"prev.png"))); } catch (MalformedURLException e1) {}
-        jButtonPrev.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent arg0) { movePreviewImage(-1); }
-        });
+        jButtonPrev.addActionListener(ev -> { movePreviewImage(-1); });
         panel.add(jButtonPrev);
         jButtonNext = new JButton();
         jButtonNext.setBorder(padding0);
@@ -527,20 +510,14 @@ public class JConfirmDialog extends JDialog
         jButtonNext.setToolTipText("次の画像 (PageDown)");
         jButtonNext.setFocusable(false);
         try { jButtonNext.setIcon(new ImageIcon(new URL(imageURLPath+"next.png"))); } catch (MalformedURLException e1) {}
-        jButtonNext.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent arg0) { movePreviewImage(1); }
-        });
+        jButtonNext.addActionListener(ev -> { movePreviewImage(1); });
         panel.add(jButtonNext);
         ///表示範囲調整
         /*jButtonFit = new JButton();
         jButtonFit.setBorder(padding0);
         jButtonFit.setPreferredSize(new Dimension(22, 22));
         try { jButtonFit.setIcon(new ImageIcon(new URL(imageURL.toString()+"/arrow_out.png"))); } catch (MalformedURLException e1) {}
-        jButtonFit.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent arg0) { fitPreviewImage(JCoverImagePanel.FIT_ALL); }
-        });
+        jButtonFit.addActionListener(ev -> { fitPreviewImage(JCoverImagePanel.FIT_ALL); });
         panel.add(jButtonFit);*/
         jButtonFitW = new JButton();
         jButtonFitW.setBorder(padding0);
@@ -548,10 +525,7 @@ public class JConfirmDialog extends JDialog
         jButtonFitW.setToolTipText("画像の幅に拡大");
         jButtonFitW.setFocusable(false);
         try { jButtonFitW.setIcon(new ImageIcon(new URL(imageURLPath+"arrow_horizontal.png"))); } catch (MalformedURLException e1) {}
-        jButtonFitW.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent arg0) { fitPreviewImage(JCoverImagePanel.FIT_W); }
-        });
+        jButtonFitW.addActionListener(ev -> { fitPreviewImage(JCoverImagePanel.FIT_W); });
         panel.add(jButtonFitW);
         jButtonFitH = new JButton();
         jButtonFitH.setBorder(padding0);
@@ -559,29 +533,20 @@ public class JConfirmDialog extends JDialog
         jButtonFitH.setToolTipText("画像の高さに拡大 (中ボタン)");
         jButtonFitH.setFocusable(false);
         try { jButtonFitH.setIcon(new ImageIcon(new URL(imageURLPath+"arrow_vertical.png"))); } catch (MalformedURLException e1) {}
-        jButtonFitH.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent arg0) { fitPreviewImage(JCoverImagePanel.FIT_H); }
-        });
+        jButtonFitH.addActionListener(ev -> { fitPreviewImage(JCoverImagePanel.FIT_H); });
         panel.add(jButtonFitH);
         //移動
         /*jButtonMove = new JButton("＋");
         jButtonMove.setBorder(padding0);
         jButtonMove.setPreferredSize(new Dimension(28, 24));
-        jButtonMove.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent arg0) {  }
-        });
+        jButtonMove.addActionListener(ev -> {  });
         panel.add(jButtonMove);
 
         //範囲拡大
         jButtonRange = new JButton("□");
         jButtonRange.setBorder(padding0);
         jButtonRange.setPreferredSize(new Dimension(28, 24));
-        jButtonRange.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent arg0) {  }
-        });
+        jButtonRange.addActionListener(ev -> {  });
         panel.add(jButtonRange);*/
 
         //拡大
@@ -591,10 +556,7 @@ public class JConfirmDialog extends JDialog
         jButtonZoomIn.setToolTipText("画像を拡大 (ホイール)");
         jButtonZoomIn.setFocusable(false);
         try { jButtonZoomIn.setIcon(new ImageIcon(new URL(imageURLPath+"zoomin.png"))); } catch (MalformedURLException e1) {}
-        jButtonZoomIn.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent arg0) { zoomPreview(1.01); }
-        });
+        jButtonZoomIn.addActionListener(ev -> { zoomPreview(1.01); });
         panel.add(jButtonZoomIn);
 
         //縮小
@@ -604,10 +566,7 @@ public class JConfirmDialog extends JDialog
         jButtonZoomOut.setToolTipText("画像を縮小 (ホイール)");
         jButtonZoomOut.setFocusable(false);
         try { jButtonZoomOut.setIcon(new ImageIcon(new URL(imageURLPath+"zoomout.png"))); } catch (MalformedURLException e1) {}
-        jButtonZoomOut.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent arg0) { zoomPreview(1/1.01); }
-        });
+        jButtonZoomOut.addActionListener(ev -> { zoomPreview(1/1.01); });
         panel.add(jButtonZoomOut);
 
         label = new JLabel();
@@ -619,10 +578,7 @@ public class JConfirmDialog extends JDialog
         jButtonScale.setPreferredSize(new Dimension(22, 22));
         jButtonScale.setToolTipText("プレビューを拡大します (ダブルクリック)");
         jButtonScale.setFocusable(false);
-        jButtonScale.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) { setCoverPaneSize(jButtonScale.isSelected()?2:1); }
-        });
+        jButtonScale.addActionListener(ev -> { setCoverPaneSize(jButtonScale.isSelected()?2:1); });
         panel.add(jButtonScale);
 
         //幅縮小
@@ -632,10 +588,7 @@ public class JConfirmDialog extends JDialog
         jButtonNarrow.setToolTipText("表紙の幅を狭める (Ctrl+←、右ドラッグ)");
         jButtonNarrow.setFocusable(false);
         try { jButtonNarrow.setIcon(new ImageIcon(new URL(imageURLPath+"cover_narrow.png"))); } catch (MalformedURLException e1) {}
-        jButtonNarrow.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent arg0) { setVisibleWidthOffset(-1); }
-        });
+        jButtonNarrow.addActionListener(ev -> { setVisibleWidthOffset(-1); });
         panel.add(jButtonNarrow);
 
         //幅拡大
@@ -645,10 +598,7 @@ public class JConfirmDialog extends JDialog
         jButtonWide.setToolTipText("表紙の幅を広げる (Ctrl+→、右ドラッグ)");
         jButtonWide.setFocusable(false);
         try { jButtonWide.setIcon(new ImageIcon(new URL(imageURLPath+"cover_wide.png"))); } catch (MalformedURLException e1) {}
-        jButtonWide.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent arg0) { setVisibleWidthOffset(1); }
-        });
+        jButtonWide.addActionListener(ev -> { setVisibleWidthOffset(1); });
         panel.add(jButtonWide);
 
         //幅縮小無し
@@ -658,10 +608,7 @@ public class JConfirmDialog extends JDialog
         jButtonCoverFull.setToolTipText("表紙の幅を元に戻す");
         jButtonCoverFull.setFocusable(false);
         try { jButtonCoverFull.setIcon(new ImageIcon(new URL(imageURLPath+"cover_full.png"))); } catch (MalformedURLException e1) {}
-        jButtonCoverFull.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent arg0) { resetVisibleWidth(); }
-        });
+        jButtonCoverFull.addActionListener(ev -> { resetVisibleWidth(); });
         panel.add(jButtonCoverFull);
 
         jCheckReplaceCover = new JCheckBox("元画像出力");
@@ -676,12 +623,8 @@ public class JConfirmDialog extends JDialog
         jButtonDelete.setToolTipText("表紙なし");
         jButtonDelete.setFocusable(false);
         try { jButtonDelete.setIcon(new ImageIcon(new URL(imageURLPath+"delete.png"))); } catch (MalformedURLException e1) {}
-        jButtonDelete.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent arg0) { deleteCover(); }
-        });
+        jButtonDelete.addActionListener(ev -> { deleteCover(); });
         panel.add(jButtonDelete);
-
     }
 
     public String getMetaTitle()
@@ -989,7 +932,7 @@ public class JConfirmDialog extends JDialog
             this.jScrollToc.setVisible(false);
         } else {
 
-            Vector<ChapterLineInfo> vecChapterLineInfo = bookInfo.getChapterLineInfoList();
+            List<ChapterLineInfo> vecChapterLineInfo = bookInfo.getChapterLineInfoList();
             this.tocDataModel = this.jTableToc.getModel();
             this.tocDataModel.setRowCount(0);
             for (ChapterLineInfo chapterLineInfo : vecChapterLineInfo) {

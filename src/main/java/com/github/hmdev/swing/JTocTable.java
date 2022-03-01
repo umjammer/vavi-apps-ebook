@@ -4,8 +4,6 @@ import java.awt.Color;
 import java.awt.Component;
 
 import javax.swing.JTable;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
@@ -32,12 +30,8 @@ public class JTocTable extends JTable
         columnModel.getColumn(3).setMaxWidth(60);
         columnModel.getColumn(3).setPreferredWidth(35);
 
-        this.model.addTableModelListener(new TableModelListener() {
-            @Override
-            public void tableChanged(TableModelEvent e)
-            {
+        this.model.addTableModelListener(ev -> {
                 model.table.repaint();
-            }
         });
     }
 
@@ -112,5 +106,5 @@ public class JTocTable extends JTable
         {
             return (String)this.getValueAt(row, 4);
         }
-    }    
+    }
 }

@@ -6,13 +6,14 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Vector;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -168,9 +169,9 @@ public class AozoraEpub3Converter
     boolean inYoko = false;
 
     /** 自動縦中横抑止開始 */
-    Set<Integer> noTcyStart = new HashSet<Integer>();
+    Set<Integer> noTcyStart = new HashSet<>();
     /** 自動縦中横抑止終了 */
-    Set<Integer> noTcyEnd = new HashSet<Integer>();
+    Set<Integer> noTcyEnd = new HashSet<>();
 
     //---------------- パターン ----------------//
     /** 注記パターン */
@@ -194,22 +195,22 @@ public class AozoraEpub3Converter
     /** 注記→タグ変換用
      * key=注記文字列 (［＃］除外)
      * value= { 置換文字列, 行末追加文字列 } */
-    static Map<String, String[]> chukiMap = new HashMap<String, String[]>();
+    static Map<String, String[]> chukiMap = new HashMap<>();
 
     /** 注記フラグ 改行なし key = 注記名 */
-    static Set<String> chukiFlagNoBr = new HashSet<String>();
+    static Set<String> chukiFlagNoBr = new HashSet<>();
     /** 注記フラグ 圏点開始 key = 注記名 */
-    static Set<String> chukiFlagNoRubyStart = new HashSet<String>();
+    static Set<String> chukiFlagNoRubyStart = new HashSet<>();
     /** 注記フラグ 圏点終了 key = 注記名 */
-    static Set<String> chukiFlagNoRubyEnd = new HashSet<String>();
+    static Set<String> chukiFlagNoRubyEnd = new HashSet<>();
     /** 注記フラグ 改ページ処理 key = 注記名 */
-    public static Set<String> chukiFlagPageBreak = new HashSet<String>();
+    public static Set<String> chukiFlagPageBreak = new HashSet<>();
     /** 注記フラグ 左右中央 key = 注記名 */
-    static Set<String> chukiFlagMiddle = new HashSet<String>();
+    static Set<String> chukiFlagMiddle = new HashSet<>();
     /** 注記フラグ ページ左 key = 注記名 */
-    static Set<String> chukiFlagBottom = new HashSet<String>();
+    static Set<String> chukiFlagBottom = new HashSet<>();
     /** 注記フラグ 訓点・返り点 key = 注記名 */
-    static Set<String> chukiKunten = new HashSet<String>();
+    static Set<String> chukiKunten = new HashSet<>();
 
     /** 注記を返す 画像のみの出力用 */
     public String[] getChukiValue(String key)
@@ -220,9 +221,9 @@ public class AozoraEpub3Converter
     /** 後述注記→タグ変換用
      * key=注記文字列 (「」内削除)
      * value= { 前タグ, 後タグ } */
-    static Map<String, String[]> sufChukiMap = new HashMap<String, String[]>();
+    static Map<String, String[]> sufChukiMap = new HashMap<>();
 
-    static Map<String, Pattern> chukiPatternMap = new HashMap<String, Pattern>();
+    static Map<String, Pattern> chukiPatternMap = new HashMap<>();
 
     /** 文字置換マップ */
     static Map<Character, String> replaceMap = null;
@@ -385,8 +386,8 @@ public class AozoraEpub3Converter
         //単純文字置換
         InputStream replaceFile = AozoraEpub3Converter.class.getResourceAsStream("/replace.txt");
         if (replaceFile != null) {
-            replaceMap = new HashMap<Character, String>();
-            replace2Map = new HashMap<String, String>();
+            replaceMap = new HashMap<>();
+            replace2Map = new HashMap<>();
             src = new BufferedReader(new InputStreamReader(replaceFile, "UTF-8"));
             lineNum = 0;
             try {
@@ -414,10 +415,10 @@ public class AozoraEpub3Converter
 
         //外字フォント一覧取得
         Collection<String> rs = ResourceList.getResources(Pattern.compile(writer.getGaijiFontPath()));
-        utf16FontMap = new HashMap<Integer, String>();
-        utf32FontMap = new HashMap<Integer, String>();
-        ivs16FontMap = new HashMap<String, String>();
-        ivs32FontMap = new HashMap<String, String>();
+        utf16FontMap = new HashMap<>();
+        utf32FontMap = new HashMap<>();
+        ivs16FontMap = new HashMap<>();
+        ivs32FontMap = new HashMap<>();
         for (String fontFile : rs) {
             if (!fontFile.endsWith(File.separator)) {
                 String fileName = fontFile.substring(fontFile.lastIndexOf(File.separator) + 1).toLowerCase();
@@ -537,7 +538,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
 
         this.chapterSection = section;
         //見出し
-        if (chapterChukiMap == null) chapterChukiMap = new HashMap<String, Integer>();
+        if (chapterChukiMap == null) chapterChukiMap = new HashMap<>();
         else chapterChukiMap.clear();
         if (h) {
             chapterChukiMap.put("ここから見出し", ChapterLineInfo.TYPE_CHUKI_H);
@@ -621,7 +622,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
         String line;
         this.lineNum = -1;
         //前の行のバッファ [1行前, 2行前]
-        String[] preLines = new String[]{null, null};
+        String[] preLines = { null, null };
 
         //コメントブロック内
         boolean inComment = false;
@@ -806,8 +807,8 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                 if (this.autoChapterName) {
                     boolean isChapter = false;
                     //数字を含まない章名
-                    for (int i=0; i<this.chapterName.length; i++) {
-                        String prefix = this.chapterName[i];
+                    for (int i=0; i<chapterName.length; i++) {
+                        String prefix = chapterName[i];
                         if (noChukiLine.startsWith(prefix)) {
                             if (noChukiLine.length() == prefix.length()) { isChapter = true; break; }
                             else if (isChapterSeparator(noChukiLine.charAt(prefix.length()))) { isChapter = true; break; }
@@ -815,15 +816,15 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                     }
                     //数字を含む章名
                     if (!isChapter) {
-                        for (int i=0; i<this.chapterNumPrefix.length; i++) {
-                            String prefix = this.chapterNumPrefix[i];
+                        for (int i=0; i<chapterNumPrefix.length; i++) {
+                            String prefix = chapterNumPrefix[i];
                             if (noChukiLine.startsWith(prefix)) {
                                 int idx = prefix.length();
                                 //次が数字かチェック
                                 while (noChukiLineLength > idx && isChapterNum(noChukiLine.charAt(idx))) idx++;
                                 if (idx <= prefix.length()) break; //数字がなければ抽出しない
                                 //後ろをチェック prefixに対応するsuffixで回す
-                                for (String suffix : this.chapterNumSuffix[i]) {
+                                for (String suffix : chapterNumSuffix[i]) {
                                     if (!"".equals(suffix)) {
                                         if (noChukiLine.substring(idx).startsWith(suffix)) {
                                             idx += suffix.length();
@@ -861,15 +862,15 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                 }
                 if (this.autoChapterNumParen || this.autoChapterNumParenTitle) {
                     //括弧内数字のみ
-                    for (int i=0; i<this.chapterNumParenPrefix.length; i++) {
-                        String prefix = this.chapterNumParenPrefix[i];
+                    for (int i=0; i<chapterNumParenPrefix.length; i++) {
+                        String prefix = chapterNumParenPrefix[i];
                         if (noChukiLine.startsWith(prefix)) {
                             int idx = prefix.length();
                             //次が数字かチェック
                             while (noChukiLineLength > idx && isChapterNum(noChukiLine.charAt(idx))) idx++;
                             if (idx <= prefix.length()) break; //数字がなければ抽出しない
                             //後ろをチェック
-                            String suffix = this.chapterNumParenSuffix[i];
+                            String suffix = chapterNumParenSuffix[i];
                             if (noChukiLine.substring(idx).startsWith(suffix)) {
                                 idx += suffix.length();
                                 if (this.autoChapterNumParen && noChukiLine.length()==idx ||
@@ -1116,7 +1117,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
         int lastZeroTagLevelLineNum = -1;
 
         //タイトル目の画像等をバッファ
-        Vector<String> preTitleBuf = null;
+        List<String> preTitleBuf = null;
 
         //コメントブロック内
         boolean inComment = false;
@@ -1135,7 +1136,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
             //outがnullなら改ページと出力はされない
             out = null;
             //バッファ
-            preTitleBuf = new Vector<String>();
+            preTitleBuf = new ArrayList<>();
             noImage = true;
         }
 

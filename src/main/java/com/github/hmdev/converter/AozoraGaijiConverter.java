@@ -20,10 +20,10 @@ public class AozoraGaijiConverter
     //HashMap<String, String> chukiCidMap = new HashMap<String, String>();
 
     /** 青空文庫注記外字をUTF-8に変換 */
-    Map<String, String> chukiUtfMap = new HashMap<String, String>();
+    Map<String, String> chukiUtfMap = new HashMap<>();
 
     /** 青空文庫注記外字を代替文字に変換 */
-    Map<String, String> chukiAltMap = new HashMap<String, String>();
+    Map<String, String> chukiAltMap = new HashMap<>();
 
     public AozoraGaijiConverter(String jarPath) throws IOException
     {

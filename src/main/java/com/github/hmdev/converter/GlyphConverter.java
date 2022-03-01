@@ -18,7 +18,7 @@ public class GlyphConverter
     static Logger logger = Logger.getLogger("com.github.hmdev");
 
     /** 分解表記文字列→拡張ラテン文字の対応テーブル */
-    HashMap<Character, String> cidMap = new HashMap<Character, String>();
+    HashMap<Character, String> cidMap = new HashMap<>();
 
     /** 初期化 パラメータファイル読み込み 
      * @throws IOException */

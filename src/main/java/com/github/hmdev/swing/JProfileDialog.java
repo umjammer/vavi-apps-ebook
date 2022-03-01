@@ -76,11 +76,9 @@ public class JProfileDialog extends JDialog
         jButtonCreate.setBorder(paddingButton);
         //jButtonCreate.setPreferredSize(new Dimension(80, 26));
         try { jButtonCreate.setIcon(new ImageIcon(new URL(imageURLPath+"add.png"))); } catch (MalformedURLException e1) {}
-        jButtonCreate.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
+        jButtonCreate.addActionListener(ev -> {
                 if (linstener != null) linstener.actionPerformed(new ActionEvent(jTextProfileName.getText(), 1, "create"));
                 setVisible(false);
-            }
         });
         panel = new JPanel();
         panel.setBorder(padding4H);
@@ -91,11 +89,9 @@ public class JProfileDialog extends JDialog
         jButtonEdit.setBorder(paddingButton);
         //jButtonEdit.setPreferredSize(new Dimension(80, 26));
         try { jButtonEdit.setIcon(new ImageIcon(new URL(imageURLPath+"edit.png"))); } catch (MalformedURLException e1) {}
-        jButtonEdit.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
+        jButtonEdit.addActionListener(ev -> {
                 if (linstener != null) linstener.actionPerformed(new ActionEvent(jTextProfileName.getText(), 2, "edit"));
                 setVisible(false);
-            }
         });
         panel = new JPanel();
         panel.setBorder(padding4H);
@@ -106,8 +102,7 @@ public class JProfileDialog extends JDialog
         jButtonDelete.setBorder(paddingButton);
         //jButtonDelete.setPreferredSize(new Dimension(80, 26));
         try { jButtonDelete.setIcon(new ImageIcon(new URL(imageURLPath+"delete.png"))); } catch (MalformedURLException e1) {}
-        jButtonDelete.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
+        jButtonDelete.addActionListener(ev -> {
                 if (linstener != null) {
                     int ret = JOptionPane.showConfirmDialog(jButtonDelete, orgName+" を削除しますか？", "プロファイル削除", JOptionPane.YES_NO_OPTION);
                     if (ret == JOptionPane.YES_OPTION) {
@@ -115,7 +110,6 @@ public class JProfileDialog extends JDialog
                         setVisible(false);
                     }
                 }
-            }
         });
         panel = new JPanel();
         panel.setBorder(padding4H);
@@ -126,11 +120,9 @@ public class JProfileDialog extends JDialog
         jButtonCancel.setBorder(paddingButton);
         //jButtonCancel.setPreferredSize(new Dimension(80, 26));
         try { jButtonCancel.setIcon(new ImageIcon(new URL(imageURLPath+"cross.png"))); } catch (MalformedURLException e1) {}
-        jButtonCancel.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
+        jButtonCancel.addActionListener(ev -> {
                 jTextProfileName.setText("");
                 setVisible(false);
-            }
         });
         panel = new JPanel();
         panel.setBorder(padding4H);
@@ -168,5 +160,4 @@ public class JProfileDialog extends JDialog
     {
         this.linstener = linstener;
     }
-
 }

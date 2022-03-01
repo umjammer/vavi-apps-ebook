@@ -8,9 +8,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Vector;
+import java.util.List;
 import java.util.logging.Logger;
 
 import org.apache.commons.compress.archivers.ArchiveEntry;
@@ -47,7 +48,7 @@ public class ImageInfoReader
     public String archiveTextParentPath = "";
 
     /** 出力順にファイル名を格納 imageFileInfosのkeyと同じ文字列 */
-    Vector<String> imageFileNames;
+    List<String> imageFileNames;
 
     /** txtならZip内の画像情報 初回にすべて読み込む
      * txtでなければファイルシステムの画像情報 取得するごとに追加していく */
@@ -63,8 +64,8 @@ public class ImageInfoReader
         this.srcFile = srcFile;
         this.srcParentPath = srcFile.getParent()+"/";
         this.archiveTextParentPath = "";
-        this.imageFileNames = new Vector<String>();
-        this.imageFileInfos = new HashMap<String, ImageInfo>();
+        this.imageFileNames = new ArrayList<>();
+        this.imageFileInfos = new HashMap<>();
     }
 
     /** zipの場合はzip内のtxtのentryNameと親のパスを設定 */
@@ -100,8 +101,8 @@ public class ImageInfoReader
     {
         return this.imageFileNames.get(idx);
     }
-    /** 画像ファイル名のVectorを取得 */
-    public Vector<String> getImageFileNames()
+    /** 画像ファイル名のListを取得 */
+    public List<String> getImageFileNames()
     {
         return this.imageFileNames;
     }
@@ -295,7 +296,7 @@ public class ImageInfoReader
     public void addNoNameImageFileName()
     {
         //名前順にソートしてから追加
-        Vector<String> names = new Vector<String>();
+        List<String> names = new ArrayList<>();
         for (String name : this.imageFileInfos.keySet()) {
             if (!this.imageFileNames.contains(name)) names.add(name);
         }
