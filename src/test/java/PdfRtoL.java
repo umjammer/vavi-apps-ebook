@@ -22,6 +22,9 @@ import com.itextpdf.kernel.pdf.PdfWriter;
  */
 public class PdfRtoL {
 
+    /**
+     * @param args 0: in pdf, 1: out pdf
+     */
     public static void main(String[] args) throws Exception {
         File inFile = new File(args[0]);
         File outFile = new File(args[1]);
