@@ -136,19 +136,19 @@ public class ImageUtils
         int h = imgH;
         imageInfo.setOutWidth(imgW);
         imageInfo.setOutHeight(imgH);
-        //余白チェック時に読み込んだ画像のバッファ
+        // 余白チェック時に読み込んだ画像のバッファ
         byte[] imgBuf = null;
 
-        //回転とコントラスト調整なら読み込んでおく
+        // 回転とコントラスト調整なら読み込んでおく
         if (srcImage == null && (imageInfo.rotateAngle != 0 || gammaOp != null)) srcImage = readImage(ext, is);
 
         int[] margin = null;
         if (autoMarginLimitH > 0 || autoMarginLimitV > 0) {
-            int startPixel = (int)(w*0.01); //1%
-            int ignoreEdge = (int)(w*0.03); //3%
-            int dustSize = (int)(w*0.01); //1%
+            int startPixel = (int)(w*0.01); // 1%
+            int ignoreEdge = (int)(w*0.03); // 3%
+            int dustSize = (int)(w*0.01); // 1%
 
-            //画像がなければ読み込み 変更なしの時にそのまま出力できるように一旦バッファに読み込む
+            // 画像がなければ読み込み 変更なしの時にそのまま出力できるように一旦バッファに読み込む
             if (srcImage == null) {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 IOUtils.copy(is, baos);
@@ -159,20 +159,20 @@ public class ImageUtils
             margin = getPlainMargin(srcImage, autoMarginLimitH/100f, autoMarginLimitV/100f, autoMarginWhiteLevel/100f, autoMarginPadding/100f, startPixel, ignoreEdge, dustSize, autoMarginNombre, nombreSize);
             if (margin[0]==0 && margin[1]==0 && margin[2]==0 && margin[3]==0) margin = null;
             if (margin != null) {
-                //元画像が幅か高さかチェック
+                // 元画像が幅か高さかチェック
                 int mw = w-margin[0]-margin[2];
                 int mh = h-margin[1]-margin[3];
                 double dWH = dispW/(double)dispH;
                 double mWH = mw/(double)mh;
-                //縦横比で画面の横か縦に合わせる方向が変わらないようにマージンを調整する
-                if (w/(double)h < dWH) { //元が縦
-                    if (mWH > dWH && mw > dispW) { //余白除去で横にはみ出す
+                // 縦横比で画面の横か縦に合わせる方向が変わらないようにマージンを調整する
+                if (w/(double)h < dWH) { // 元が縦
+                    if (mWH > dWH && mw > dispW) { // 余白除去で横にはみ出す
                         mh = (int)(mw/dWH);
-                        margin[3] = h-margin[1]-mh;//下マージンを伸ばす
+                        margin[3] = h-margin[1]-mh; // 下マージンを伸ばす
                         if (margin[3] < 0) { margin[3] = 0; margin[1] = h-mh; }
                     }
-                } else { //元が横
-                    if (mWH < dWH && mh > dispH) { //余白除去で縦にはみ出す
+                } else { // 元が横
+                    if (mWH < dWH && mh > dispH) { // 余白除去で縦にはみ出す
                         mw = (int)(mh*dWH);
                         double mLR = margin[0]+margin[2];
                         margin[0] = (int)((w-mw)*margin[0]/mLR);
@@ -183,11 +183,11 @@ public class ImageUtils
                 h = mh;
             }
         }
-        //倍率取得
+        // 倍率取得
         double scale = 1;
-        if (maxImagePixels >= 10000) scale = Math.sqrt((double)maxImagePixels/(w*h)); //最大画素数指定
-        if (maxImageW > 0) scale = Math.min(scale, (double)maxImageW/w); //最大幅指定
-        if (maxImageH > 0) scale = Math.min(scale, (double)maxImageH/h); //最大高さ指定
+        if (maxImagePixels >= 10000) scale = Math.sqrt((double)maxImagePixels/(w*h)); // 最大画素数指定
+        if (maxImageW > 0) scale = Math.min(scale, (double)maxImageW/w); // 最大幅指定
+        if (maxImageH > 0) scale = Math.min(scale, (double)maxImageH/h); // 最大高さ指定
 
         if (scale >= 1 && (gammaOp == null || srcImage.getType() == BufferedImage.TYPE_INT_RGB)) {
             if (srcImage == null) {
@@ -230,7 +230,7 @@ public class ImageUtils
                         } finally {
                             g.dispose();
                         }
-                        srcImage = outImage;//入れ替え
+                        srcImage = outImage; // 入れ替え
                     } else if (margin != null) srcImage = srcImage.getSubimage(margin[0], margin[1], srcImage.getWidth()-margin[2]-margin[0], srcImage.getHeight()-margin[3]-margin[1]);
                     if (gammaOp != null) {
                         BufferedImage filterdImage = new BufferedImage(srcImage.getWidth(), srcImage.getHeight(), BufferedImage.TYPE_INT_RGB);
@@ -447,7 +447,7 @@ public class ImageUtils
      * @return 余白画素数(left, top, right, bottom) */
     static private int[] getPlainMargin(BufferedImage image, float limitH, float limitV, float whiteLevel, float padding, int startPixel, int ignoreEdge, int dustSize, int nombreType, float nombreSize)
     {
-        int[] margin = new int[4]; //left, top, right, bottom
+        int[] margin = new int[4]; // left, top, right, bottom
         int width = image.getWidth();
         int height = image.getHeight();
 
@@ -459,30 +459,30 @@ public class ImageUtils
         int paddingV = Math.max(1, (int)(height*padding));
 
         //除去制限をピクセルに変更 上下、左右それぞれでの最大値
-        int limitPxH = (int)(width*limitH);//後で合計から中央に寄せる
+        int limitPxH = (int)(width*limitH); // 後で合計から中央に寄せる
         int limitPxV = (int)(height*limitV)/2;
         //ノンブルがあった場合の最大マージン
         int limitPxT = (int)(height*limitV)/2;
         int limitPxB = (int)(height*limitV)/2;
 
         if (nombreType == NOMBRE_TOP || nombreType == NOMBRE_TOPBOTTOM) {
-            limitPxT += (int)(height*0.05); //5%加算
+            limitPxT += (int)(height*0.05); // 5%加算
         }
         if (nombreType == NOMBRE_BOTTOM || nombreType == NOMBRE_TOPBOTTOM) {
-            limitPxB += (int)(height*0.05); //5%加算
+            limitPxB += (int)(height*0.05); // 5%加算
         }
 
         int ignoreEdgeR = ignoreEdge;
-        //int ignoreEdgeR = (int)(width*0.3); //行の少ないページで問題有り
+        //int ignoreEdgeR = (int)(width*0.3); // 行の少ないページで問題有り
         //上
         int coloredPixels = getColoredPixelsH(image, width, startPixel, rgbLimit, 0, ignoreEdge, ignoreEdgeR, dustSize);
-        if (coloredPixels > 0) {//外側へ
+        if (coloredPixels > 0) { // 外側へ
             for (int i=startPixel-1; i>=0; i--) {
                 coloredPixels = getColoredPixelsH(image, width, i, rgbLimit, 0, ignoreEdge, ignoreEdgeR, 0);
                 margin[1] = i;
                 if (coloredPixels == 0) break;
             }
-        } else {//内側へ
+        } else { // 内側へ
             margin[1] = startPixel;
             for (int i=startPixel+1; i<=limitPxT; i++) {
                 coloredPixels = getColoredPixelsH(image, width, i, rgbLimit, 0, ignoreEdge, ignoreEdgeR, dustSize);
@@ -492,13 +492,13 @@ public class ImageUtils
         }
         //下
         coloredPixels = getColoredPixelsH(image, width, height-1-startPixel, rgbLimit, 0, ignoreEdge, ignoreEdgeR, dustSize);
-        if (coloredPixels > 0) {//外側へ
+        if (coloredPixels > 0) { // 外側へ
             for (int i=startPixel-1; i>=0; i--) {
                 coloredPixels = getColoredPixelsH(image, width, height-1-i, rgbLimit, 0, ignoreEdge, ignoreEdgeR, 0);
                 margin[3] = i;
                 if (coloredPixels == 0) break;
             }
-        } else {//内側へ
+        } else { // 内側へ
             margin[3] = startPixel;
             for (int i=startPixel+1; i<=limitPxB; i++) {
                 coloredPixels = getColoredPixelsH(image, width, height-1-i, rgbLimit, 0, ignoreEdge, ignoreEdgeR, dustSize);
@@ -520,15 +520,15 @@ public class ImageUtils
                 coloredPixels = getColoredPixelsH(image, width, i, rgbLimit, 0, ignoreEdge, ignoreEdgeR, 0);
                 if (coloredPixels == 0) { nombreEnd = i; if (nombreEnd-margin[1] > nombreDust) break; } //ノンブル上のゴミは無視
             }
-            if (nombreEnd > margin[1]+height*0.005 && nombreEnd <= nombreLimit) { //0.5%-3％以下
+            if (nombreEnd > margin[1]+height*0.005 && nombreEnd <= nombreLimit) { // 0.5%-3％以下
                 int whiteEnd = nombreEnd;
-                int whiteLimit = limitPxT;//+(int)(height*0.05); //5%加算
+                int whiteLimit = limitPxT; // +(int)(height*0.05); // 5%加算
                 for (int i=nombreEnd+1; i<=whiteLimit; i++) {
                     coloredPixels = getColoredPixelsH(image, width, i, rgbLimit, 0, ignoreEdge, ignoreEdgeR, dustSize);
                     if (coloredPixels == 0) whiteEnd = i;
                     else if (i-nombreEnd > nombreDust) break;
                 }
-                if (whiteEnd > nombreEnd+height*0.01) { //1%より大きい空白
+                if (whiteEnd > nombreEnd+height*0.01) { // 1%より大きい空白
                     margin[1] = whiteEnd;
                     hasNombreT = true;
                 }
@@ -544,15 +544,15 @@ public class ImageUtils
                 coloredPixels = getColoredPixelsH(image, width, height-1-i, rgbLimit, 0, ignoreEdge, ignoreEdgeR, 0);
                 if (coloredPixels == 0) { nombreEnd = i; if (nombreEnd-margin[3] > nombreDust) break; } //ノンブル下のゴミは無視
             }
-            if (nombreEnd > margin[3]+height*0.005 && nombreEnd <= nombreLimit) { //0.5%-3％以下
+            if (nombreEnd > margin[3]+height*0.005 && nombreEnd <= nombreLimit) { // 0.5%-3％以下
                 int whiteEnd = nombreEnd;
-                int whiteLimit = limitPxB;//+(int)(height*0.05); //5%加算
+                int whiteLimit = limitPxB; // +(int)(height*0.05); // 5%加算
                 for (int i=nombreEnd+1; i<=whiteLimit; i++) {
                     coloredPixels = getColoredPixelsH(image, width, height-1-i, rgbLimit, 0, ignoreEdge, ignoreEdgeR, dustSize);
                     if (coloredPixels == 0) whiteEnd = i;
                     else if (i-nombreEnd > nombreDust) break;
                 }
-                if (whiteEnd > nombreEnd+height*0.01) { //1%より大きい空白
+                if (whiteEnd > nombreEnd+height*0.01) { // 1%より大きい空白
                     margin[3] = whiteEnd;
                     hasNombreB = true;
                 }
@@ -564,13 +564,13 @@ public class ImageUtils
         int ignoreBottom = Math.max(ignoreEdge, margin[3]);
         //左
         coloredPixels = getColordPixelsV(image, height, startPixel, rgbLimit, 0, ignoreTop, ignoreBottom, dustSize);
-        if (coloredPixels > 0) {//外側へ
+        if (coloredPixels > 0) { // 外側へ
             for (int i=startPixel-1; i>=0; i--) {
                 coloredPixels = getColordPixelsV(image, height, i, rgbLimit, 0, ignoreTop, ignoreBottom, 0);
                 margin[0] = i;
                 if (coloredPixels == 0) break;
             }
-        } else {//内側へ
+        } else { // 内側へ
             margin[0] = startPixel;
             for (int i=startPixel+1; i<=limitPxH; i++) {
                 coloredPixels = getColordPixelsV(image, height, i, rgbLimit, 0, ignoreTop, ignoreBottom, dustSize);
@@ -580,13 +580,13 @@ public class ImageUtils
         }
         //右
         coloredPixels = getColordPixelsV(image, height, width-1-startPixel, rgbLimit, 0, ignoreTop, ignoreBottom, dustSize);
-        if (coloredPixels > 0) {//外側へ
+        if (coloredPixels > 0) { // 外側へ
             for (int i=startPixel-1; i>=0; i--) {
                 coloredPixels = getColordPixelsV(image, height, width-1-i, rgbLimit, 0, ignoreTop, ignoreBottom, 0);
                 margin[2] = i;
                 if (coloredPixels == 0) break;
             }
-        } else {//内側へ
+        } else { // 内側へ
             margin[2] = startPixel;
             for (int i=startPixel+1; i<=limitPxH; i++) {
                 coloredPixels = getColordPixelsV(image, height, width-1-i, rgbLimit, 05, ignoreTop, ignoreBottom, dustSize);
@@ -703,14 +703,14 @@ public class ImageUtils
         if (w > dustSize) return false;
 
         //左
-        w = 1; //黒画素のある幅
+        w = 1; // 黒画素のある幅
         for (int x=curX-1; x>=minX; x--) {
             h = 0;
             for (int y=maxY-1; y>=minY; y--) {
                 if (isColored(image.getRGB(x, y), rgbLimit)) h++;
             }
             if (h > dustSize) return false;
-            if (h == 0) break; //すべて白なら抜ける
+            if (h == 0) break; // すべて白なら抜ける
             w++;
         }
         //右
@@ -720,19 +720,19 @@ public class ImageUtils
                 if (isColored(image.getRGB(x, y), rgbLimit)) h++;
             }
             if (h > dustSize) return false;
-            if (h == 0) break; //すべて白なら抜ける
+            if (h == 0) break; // すべて白なら抜ける
             w++;
         }
         if (w > dustSize) return false;
         //上
-        h = 1; //黒画素のある高さ
+        h = 1; // 黒画素のある高さ
         for (int y=curY-1; y>=minY; y--) {
             w = 0;
             for (int x=maxX-1; x>=minX; x--) {
                 if (isColored(image.getRGB(x, y), rgbLimit)) w++;
             }
             if (w > dustSize) return false;
-            if (w == 0) break; //すべて白なら抜ける
+            if (w == 0) break; // すべて白なら抜ける
             h++;
         }
         //下
@@ -742,7 +742,7 @@ public class ImageUtils
                 if (isColored(image.getRGB(x, y), rgbLimit)) w++;
             }
             if (w > dustSize) return false;
-            if (w == 0) break; //すべて白なら抜ける
+            if (w == 0) break; // すべて白なら抜ける
             h++;
         }
         return h <= dustSize;

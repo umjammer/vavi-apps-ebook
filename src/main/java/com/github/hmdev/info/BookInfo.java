@@ -315,20 +315,20 @@ public class BookInfo
     public void excludeTocChapter()
     {
         if (this.mapChapterLine == null) return;
-        //前2行と後ろ2行が自動抽出見出しの行を抽出 間の行は空行のみ許可
+        // 前2行と後ろ2行が自動抽出見出しの行を抽出 間の行は空行のみ許可
         HashSet<Integer> excludeLine = new HashSet<>();
         for (Integer lineNum : this.mapChapterLine.keySet()) {
             if (this.isPattern(lineNum)) {
                 boolean prevIsPattern = false;
                 if (this.isPattern(lineNum-1)) prevIsPattern = true;
-                else if (this.mapChapterLine.get(lineNum).emptyNext && this.isPattern(lineNum-2)) prevIsPattern = true; //前が空行の場合のみ
+                else if (this.mapChapterLine.get(lineNum).emptyNext && this.isPattern(lineNum-2)) prevIsPattern = true; // 前が空行の場合のみ
                 boolean nextIsPattern = false;
                 if (this.isPattern(lineNum+1)) nextIsPattern = true;
                 else if (this.isPattern(lineNum+2)) nextIsPattern = true;
                 if (prevIsPattern && nextIsPattern) excludeLine.add(lineNum);
             }
         }
-        //先頭と最後
+        // 先頭と最後
         HashSet<Integer> excludeLine2 = new HashSet<>();
         for (Integer lineNum : this.mapChapterLine.keySet()) {
             if (!excludeLine.contains(lineNum) && this.isPattern(lineNum)) {
@@ -585,10 +585,10 @@ public class BookInfo
 
         if (titleType != TitleType.NONE) {
 
-            //バッファからタイトルと著者取得
+            // バッファからタイトルと著者取得
             this.metaLines = metaLines;
             this.metaLineStart = metaLineStart;
-            //連続行数取得
+            // 連続行数取得
             int linesLength = 0;
             for (int i=0; i<metaLines.length; i++) {
                 if (metaLines[i] == null || metaLines[i].length() == 0) {
@@ -597,7 +597,7 @@ public class BookInfo
             }
 
             int arrIndex = 0;
-            //先頭に発行者で2行以上
+            // 先頭に発行者で2行以上
             if (pubFirst && linesLength >= 2) {
                 this.publisherLine = metaLineStart;
                 this.publisher = metaLines[0];
@@ -605,7 +605,7 @@ public class BookInfo
                 linesLength--;
                 arrIndex++;
             }
-            //表題のみ
+            // 表題のみ
             if (linesLength > 0 && titleType == TitleType.TITLE_ONLY) {
                 this.titleLine = metaLineStart;
                 this.title = metaLines[0+arrIndex];

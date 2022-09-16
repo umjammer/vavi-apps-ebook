@@ -756,7 +756,7 @@ public class JConfirmDialog extends JDialog
 
             //目次設定
             if (!this.bookInfo.isImageOnly() && this.tocDataModel != null) {
-                if (this.jTableToc.isEditing()) this.jTableToc.getCellEditor().stopCellEditing(); //編集中なら確定
+                if (this.jTableToc.isEditing()) this.jTableToc.getCellEditor().stopCellEditing(); // 編集中なら確定
                 int cnt = this.tocDataModel.getRowCount();
                 for (int row=0; row<cnt; row++) {
                     int lineNum = this.tocDataModel.getLineNum(row)-1;

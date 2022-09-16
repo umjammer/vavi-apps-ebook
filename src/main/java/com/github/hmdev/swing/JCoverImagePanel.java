@@ -268,7 +268,7 @@ public class JCoverImagePanel extends JPanel implements MouseListener, MouseMoti
         case FIT_ALL:
             this.scale = minScale; break;
         case FIT_W:
-            this.scale = Math.max(this.minScale, (double)this.visibleWidth/bookInfo.coverImage.getWidth());
+            this.scale = Math.max(this.minScale, this.visibleWidth /bookInfo.coverImage.getWidth());
             break;
         case FIT_H:
             this.scale = Math.max(this.minScale, (double)this.getHeight()/this.bookInfo.coverImage.getHeight()); break;

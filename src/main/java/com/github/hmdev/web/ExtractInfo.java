@@ -39,7 +39,7 @@ public class ExtractInfo
                 this.idx[i] = Integer.parseInt(values[i+1]);
         }
         this.pattern = patter;
-        //改行コード \n は改行文字に
+        // 改行コード \n は改行文字に
         if (replaceString != null)
             this.replacement = replaceString.replaceAll("\\\\n", "\n");
     }

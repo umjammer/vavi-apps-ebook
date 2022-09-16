@@ -87,7 +87,7 @@ public class CharUtils
     static public boolean isHiragana(char ch)
     {
         return ('ぁ'<=ch && ch<='ん') || 'ゕ'==ch || 'ゖ'==ch || 'ー'==ch || 'ゝ'==ch || 'ゞ'==ch || 'ヽ'==ch || 'ヾ'==ch || '゛'==ch || '゜'==ch
-                || 'ι'==ch; //濁点処理用の例外
+                || 'ι'==ch; // 濁点処理用の例外
                 // || 'ﾞ'==ch || 'ﾟ'== ch;
     }
     /** カタカナかチェック 半角濁点半濁点は全角に変換済 */
@@ -128,10 +128,10 @@ public class CharUtils
     {
         switch (ch[i]) {
         case '゛': case '゜':
-            //二の字点は濁点付きも漢字
+            // 二の字点は濁点付きも漢字
             return (i>0 && ch[i-1]=='〻');
         /*case 'ノ': case 'カ': case 'ケ': case 'ヵ': case 'ヶ':
-            //漢字の間にある場合だけ漢字扱い
+            // 漢字の間にある場合だけ漢字扱い
             if (i==0 || i+1==ch.length) return false;
             return _isKanji(ch, i-1) && _isKanji(ch, i+1);
         */
@@ -148,21 +148,21 @@ public class CharUtils
         case '〓': case '〆': case '々': case '〻':
             return true;
         }
-        if (0x4E00 <= c && c <= 0x9FFF) return true;//'一' <= ch && ch <= '龠'
-        if (0xF900 <= c && c <= 0xFAFF) return true;//CJK互換漢字
-        if (0xFE00 <= c && c <= 0xFE0D) return true;//VS1-14 (15,16は絵文字用なので除外)
+        if (0x4E00 <= c && c <= 0x9FFF) return true; // '一' <= ch && ch <= '龠'
+        if (0xF900 <= c && c <= 0xFAFF) return true; // CJK互換漢字
+        if (0xFE00 <= c && c <= 0xFE0D) return true; // VS1-14 (15,16は絵文字用なので除外)
         //0x20000-0x2A6DF UTF16({d840,dc00}-{d869,dedf})
         //0x2A700-0x2B81F UTF16({d869,df00}-{d86e,dc1f})
         //0x2F800-0x2FA1F UTF16({d87e,dc00}-{d87e,de1f})
         if (pre >= 0) {
-            if (0xDB40 == pre && 0xDD00 <= c && c <= 0xDDEF) return true; //IVS e0100-e01ef
+            if (0xDB40 == pre && 0xDD00 <= c && c <= 0xDDEF) return true; // IVS e0100-e01ef
             if (0xD87E == pre && 0xDc00 <= c && c <= 0xDE1F) return true;
             int code = pre<<16|c&0xFFFF;
             if (0xD840DC00 <= code && code <= 0xD869DEDF) return true;
             if (0xD869DF00 <= code && code <= 0xD86EDC1F) return true;
         }
         if (suf >= 0) {
-            if (0xDB40 == c && 0xDD00 <= suf && suf <= 0xDDEF) return true; //IVS e0100-e01ef
+            if (0xDB40 == c && 0xDD00 <= suf && suf <= 0xDDEF) return true; // IVS e0100-e01ef
             if (0xD87E == c && 0xDc00 <= suf && suf <= 0xDE1F) return true;
             int code = c<<16|suf&0xFFFF;
             if (0xD840DC00 <= code && code <= 0xD869DEDF) return true;
@@ -249,10 +249,10 @@ public class CharUtils
     static public String getChapterName(String line, int maxLength, boolean reduce)
     {
         String name = line.replaceAll("［＃.+?］", "")//注記除去
-                .replaceAll("※(※|《|》|［|］|〔|〕|〔|〕|〔|〕|｜)", "$1") //エスケープ文字から※除外
-                .replaceAll("\t", " ").replaceFirst("^[ |　]+", "").replaceFirst("[ |　]+$",""); //前後の不要な文字所除去
-        if (reduce) name = name.replaceAll("(=|＝|-|―|─)+", "$1");//連続する記号は1つに
-        //タグはimgとaを削除
+                .replaceAll("※(※|《|》|［|］|〔|〕|〔|〕|〔|〕|｜)", "$1") // エスケープ文字から※除外
+                .replaceAll("\t", " ").replaceFirst("^[ |　]+", "").replaceFirst("[ |　]+$",""); // 前後の不要な文字所除去
+        if (reduce) name = name.replaceAll("(=|＝|-|―|─)+", "$1"); // 連続する記号は1つに
+        // タグはimgとaを削除
         name = chapterTagOpenPattern.matcher(name).replaceAll("");
         name = chapterTagClosePattern.matcher(name).replaceAll("");
 

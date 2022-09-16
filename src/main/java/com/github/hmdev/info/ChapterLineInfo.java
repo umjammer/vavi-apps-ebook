@@ -58,7 +58,7 @@ public class ChapterLineInfo
     {
         switch (this.type) {
         case TYPE_TITLE: return "題";
-        case TYPE_PAGEBREAK: return ""; //一覧で表示しない
+        case TYPE_PAGEBREAK: return ""; // 一覧で表示しない
         case TYPE_CHUKI_H: return "見";
         case TYPE_CHUKI_H1: return "大";
         case TYPE_CHUKI_H2: return "中";

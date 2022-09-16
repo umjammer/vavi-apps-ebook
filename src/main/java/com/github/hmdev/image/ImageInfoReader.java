@@ -73,7 +73,7 @@ public class ImageInfoReader
     {
         int idx = archiveTextEntry.lastIndexOf('/');
         if (idx > -1) {
-            //アーカイブ内のテキストの親のパスを設定
+            // アーカイブ内のテキストの親のパスを設定
             this.archiveTextParentPath = archiveTextEntry.substring(0, idx+1);
         }
     }
@@ -147,7 +147,7 @@ public class ImageInfoReader
     public String correctExt(String srcImageFileName) throws IOException
     {
         if (this.hasImage(srcImageFileName)) return srcImageFileName;
-        //拡張子修正
+        // 拡張子修正
         srcImageFileName = srcImageFileName.replaceFirst("\\.\\w+$", ".png");
         if (this.hasImage(srcImageFileName)) return srcImageFileName;
         srcImageFileName = srcImageFileName.replaceFirst("\\.\\w+$", ".jpg");
@@ -182,7 +182,7 @@ public class ImageInfoReader
     {
         if (this.imageFileInfos.containsKey(srcImageFileName)) return true;
         if (isFile) {
-            //ファイルシステムから取得
+            // ファイルシステムから取得
             File imageFile = new File(this.srcParentPath+srcImageFileName);
             if (imageFile.exists()) return true;
         } else {
@@ -196,12 +196,12 @@ public class ImageInfoReader
      * @param srcImageFileName テキスト内の画像注記で指定されている相対ファイル名 */
     private ImageInfo _getImageInfo(String srcImageFileName) 
     {
-        //取得済みならそれを返す zipならすべて取得済み
+        // 取得済みならそれを返す zipならすべて取得済み
         ImageInfo imageInfo = this.imageFileInfos.get(srcImageFileName);
         if (imageInfo != null) return imageInfo;
-        //zipのサブパスから取得
+        // zipのサブパスから取得
         if (isFile) {
-            //ファイルシステムから取得
+            // ファイルシステムから取得
             File imageFile = new File(this.srcParentPath+srcImageFileName);
             if (imageFile.exists()) {
                 try {
@@ -213,7 +213,7 @@ public class ImageInfoReader
                 } catch (IOException ioe) { System.err.println(ioe); }
             }
         } else {
-            //Zipで中にフォルダがある場合
+            // Zipで中にフォルダがある場合
             imageInfo = this.imageFileInfos.get(this.archiveTextParentPath+srcImageFileName);
             return imageInfo;
         }
@@ -266,7 +266,7 @@ public class ImageInfoReader
                     ImageInfo imageInfo = null;
                     InputStream is = null;
                     try {
-                        //読めない場合があるので一旦バイト配列に読み込み
+                        // 読めない場合があるので一旦バイト配列に読み込み
                         ByteArrayOutputStream baos = new ByteArrayOutputStream();
                         archive.extractFile(fileHeader, baos);
                         baos.close();
@@ -295,7 +295,7 @@ public class ImageInfoReader
     /** 圧縮ファイル内の画像で画像注記以外の画像も表紙に選択できるように追加 */
     public void addNoNameImageFileName()
     {
-        //名前順にソートしてから追加
+        // 名前順にソートしてから追加
         List<String> names = new ArrayList<>();
         for (String name : this.imageFileInfos.keySet()) {
             if (!this.imageFileNames.contains(name)) names.add(name);
@@ -322,7 +322,7 @@ public class ImageInfoReader
         if (this.isFile) {
             File file = new File(this.srcParentPath+srcImageFileName);
             if (!file.exists()) {
-                //拡張子修正
+                // 拡張子修正
                 srcImageFileName = this.correctExt(srcImageFileName);
                 file = new File(this.srcParentPath+srcImageFileName);
                 if (!file.exists()) return null;

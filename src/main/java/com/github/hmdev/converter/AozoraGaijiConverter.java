@@ -56,7 +56,7 @@ public class AozoraGaijiConverter
                         if (!line.startsWith("※［＃", chukiStart)) continue;
                         int chukiEnd = line.indexOf('\t', chukiStart);
                         int chukiCode = line.indexOf('、', chukiStart);
-                        if (chukiCode != -1 && line.charAt(chukiCode+1) == '「') chukiCode = line.indexOf('、', chukiCode+1);//注記内に、がある
+                        if (chukiCode != -1 && line.charAt(chukiCode+1) == '「') chukiCode = line.indexOf('、', chukiCode+1); // 注記内に、がある
                         if (chukiCode != -1 && (chukiEnd == -1 || chukiCode < chukiEnd)) chukiEnd = chukiCode+1;
                         if (chukiEnd == -1) chukiEnd = line.length();
 
