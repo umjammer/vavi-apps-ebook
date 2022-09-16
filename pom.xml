@@ -9,21 +9,122 @@
   <artifactId>AozoraEpub3</artifactId>
   <version>1.1.1b12Q-SNAPSHOT</version>
 
+  <profiles>
+    <profile>
+      <!-- $ mvn -P a2e_1 exec:java -Dexec.args='"file"' -->
+      <id>a2e_1</id>
+      <build>
+        <plugins>
+          <plugin>
+            <!-- TODO how to gather default args and user input??? -->
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <version>1.6.0</version>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>java</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <mainClass>AozoraEpub3</mainClass>
+              <classpathScope>test</classpathScope>
+              <systemProperties>
+                <systemProperty>
+                  <!-- not fork, so not work -->
+                  <key>java.util.logging.config.file</key>
+                  <value>${project.build.testOutputDirectory}/logging.properties</value>
+                </systemProperty>
+              </systemProperties>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <!-- mvn -P a2e_2 antrun:run -Dinfile='file' -->
+      <id>a2e_2</id>
+      <build>
+        <plugins>
+          <plugin>
+            <!-- GOOD: fork: OK, test jars: OK, user args, default args: OK -->
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <version>3.1.0</version>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <target>
+                <java classname="AozoraEpub3" fork="true">
+                  <classpath>
+                    <path refid="maven.compile.classpath"/>
+                    <path refid="maven.test.classpath"/>
+                    <path refid="maven.plugin.classpath"/>
+                  </classpath>
+                  <jvmarg value="-Djava.util.logging.config.file=${project.build.testOutputDirectory}/logging.properties" />
+                  <arg value="-of" />
+                  <arg value="-d" />
+                  <arg value="." />
+                  <arg value="${infile}" />
+                </java>
+              </target>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <!-- mvn -P a2e_3 exec:exec -Dinfile='file' -->
+      <id>a2e_3</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <version>3.0.0</version>
+            <configuration>
+              <executable>java</executable>
+              <longClasspath>true</longClasspath>
+              <addResourcesToClasspath>true</addResourcesToClasspath>
+              <!-- TODO how about test jars??? -->
+              <additionalClasspathElements>${project.build.testOutputDirectory}</additionalClasspathElements>
+              <arguments>
+                <argument>-Djava.util.logging.config.file=${project.build.testOutputDirectory}/logging.properties</argument>
+                <argument>-classpath</argument>
+                <classpath />
+                <argument>AozoraEpub3</argument>
+                <argument>-d</argument>
+                <argument>.</argument>
+                <argument>-of</argument>
+                <argument>${infile}</argument>
+              </arguments>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+
   <build>
     <plugins>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.8.1</version>
+        <version>3.10.1</version>
         <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
-          <encoding>UTF-8</encoding>
+          <source>17</source>
+          <target>17</target>
         </configuration>
       </plugin>
 
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>3.0.0-M5</version>
+        <version>3.0.0-M7</version>
         <configuration>
           <argLine>
             -Djava.util.logging.config.file=${project.build.testOutputDirectory}/logging.properties
@@ -39,7 +140,7 @@
       <dependency>
         <groupId>org.junit</groupId>
         <artifactId>junit-bom</artifactId>
-        <version>5.8.1</version>
+        <version>5.8.2</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -66,7 +167,7 @@
     <dependency>
       <groupId>com.github.junrar</groupId>
       <artifactId>junrar</artifactId>
-      <version>7.4.1</version>
+      <version>7.5.3</version>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
@@ -81,7 +182,7 @@
     <dependency>
       <groupId>org.jsoup</groupId>
       <artifactId>jsoup</artifactId>
-      <version>1.14.3</version>
+      <version>1.15.3</version>
     </dependency>
     <dependency>
       <groupId>com.github.albfernandez</groupId>
@@ -92,6 +193,16 @@
       <groupId>commons-cli</groupId>
       <artifactId>commons-cli</artifactId>
       <version>1.5.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.formdev</groupId>
+      <artifactId>flatlaf</artifactId>
+      <version>2.4</version>
+    </dependency>
+    <dependency>
+      <groupId>vavi</groupId> <!-- com.github.umjammer -->
+      <artifactId>vavi-commons</artifactId>
+      <version>1.1.7-SNAPSHOT</version>
     </dependency>
 
     <dependency>
@@ -107,13 +218,6 @@
     <dependency>
       <groupId>org.junit.platform</groupId>
       <artifactId>junit-platform-commons</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>vavi</groupId> <!-- com.github.umjammer -->
-      <artifactId>vavi-commons</artifactId>
-      <version>1.1.6-SNAPSHOT</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
