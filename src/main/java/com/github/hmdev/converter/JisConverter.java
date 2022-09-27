@@ -201,18 +201,4 @@ public class JisConverter
         }
         return null;
     }
-
-    /*public static void main(String[] args)
-    {
-        JisConverter converter = new JisConverter();
-        System.out.println(converter.toUTF8(0, 0, 1)); // !
-        System.out.println(converter.toUTF8(1, 4, 87)); // か゚
-        System.out.println(converter.toUTF8(1, 12, 90)); // null
-        System.out.println(converter.toUTF8(1, 13, 94)); // ☞
-        System.out.println(converter.toUTF8(1, 14, 1)); // 俱
-        System.out.println(converter.toUTF8(1, 16, 1)); // 亜
-        System.out.println(converter.toUTF8(2, 94, 64)); // 䵷
-        System.out.println(converter.toUTF8(2, 94, 86)); // 𪚲
-
-    }*/
 }
