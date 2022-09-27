@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -227,9 +228,9 @@ public class AozoraEpub3Converter
 
     static Map<String, Pattern> chukiPatternMap = new HashMap<>();
 
-    /** 文字置換マップ */
+    /** 文字置換マップ: replace.txt */
     static Map<Character, String> replaceMap = null;
-    /** 文字置換マップ 2文字用 */
+    /** 文字置換マップ 2文字用: replace.txt */
     static Map<String, String> replace2Map = null;
 
     /** U+FFFF以前の文字の外字フォントパス文字列 */
@@ -314,12 +315,12 @@ public class AozoraEpub3Converter
         gaijiConverter = new AozoraGaijiConverter(jarPath);
 
         // 注記タグ変換
-        InputStream chukiTagFile = AozoraEpub3Converter.class.getResourceAsStream("/chuki_tag.txt");
-        BufferedReader src = new BufferedReader(new InputStreamReader(chukiTagFile, "UTF-8"));
+        try (InputStream chukiTagFile = AozoraEpub3Converter.class.getResourceAsStream("/chuki_tag.txt");
+             Scanner src = new Scanner(new InputStreamReader(chukiTagFile, StandardCharsets.UTF_8))) {
             String line;
             int lineNum = 0;
-        try {
-            while ((line = src.readLine()) != null) {
+            while (src.hasNextLine()) {
+                line = src.nextLine();
                 lineNum++;
                 if (line.length() > 0 && line.charAt(0)!='#') {
                     try {
@@ -348,9 +349,14 @@ public class AozoraEpub3Converter
                     }
                 }
             }
-        } finally {
-            src.close();
         }
+logger.fine("chukiFlagNoBr: " + (chukiFlagNoBr != null ? chukiFlagNoBr.size() : 0));
+logger.fine("chukiFlagNoRubyStart: " + (chukiFlagNoRubyStart != null ? chukiFlagNoRubyStart.size() : 0));
+logger.fine("chukiFlagNoRubyEnd: " + (chukiFlagNoRubyEnd != null ? chukiFlagNoRubyEnd.size() : 0));
+logger.fine("chukiFlagPageBreak: " + (chukiFlagPageBreak != null ? chukiFlagPageBreak.size() : 0));
+logger.fine("chukiFlagMiddle: " + (chukiFlagMiddle != null ? chukiFlagMiddle.size() : 0));
+logger.fine("chukiFlagBottom: " + (chukiFlagBottom != null ? chukiFlagBottom.size() : 0));
+logger.fine("chukiKunten: " + (chukiKunten != null ? chukiKunten.size() : 0));
         // TODO パターンとprintfのFormatを設定ファイルから読み込みできるようにする (printfの引数の演算処理はフラグで切り替え？)
         chukiPatternMap.put("折り返し", Pattern.compile("^［＃ここから([０-９]+)字下げ、折り返して([０-９]+)字下げ(.*)］"));
         chukiPatternMap.put("字下げ字詰め", Pattern.compile("^［＃ここから([０-９]+)字下げ、([０-９]+)字詰め.*］"));
@@ -358,11 +364,11 @@ public class AozoraEpub3Converter
         chukiPatternMap.put("字下げ終わり複合", Pattern.compile("^［＃ここで字下げ.*終わり"));
 
         // 前方参照注記
-        InputStream chukiSufFile = AozoraEpub3Converter.class.getResourceAsStream("/chuki_tag_suf.txt");
-        src = new BufferedReader(new InputStreamReader(chukiSufFile, "UTF-8"));
+        try (InputStream chukiSufFile = AozoraEpub3Converter.class.getResourceAsStream("/chuki_tag_suf.txt");
+             Scanner src = new Scanner(new InputStreamReader(chukiSufFile, StandardCharsets.UTF_8))) {
             lineNum = 0;
-        try {
-            while ((line = src.readLine()) != null) {
+            while (src.hasNextLine()) {
+                String line = src.nextLine();
                 lineNum++;
                 if (line.length() > 0 && line.charAt(0)!='#') {
                     try {
@@ -380,19 +386,18 @@ public class AozoraEpub3Converter
                     }
                 }
             }
-        } finally {
-            src.close();
         }
+logger.fine("sufChukiMap: " + (sufChukiMap != null ? sufChukiMap.size() : 0));
 
-        //単純文字置換
+        // 単純文字置換 (user defined in classpath)
         InputStream replaceFile = AozoraEpub3Converter.class.getResourceAsStream("/replace.txt");
         if (replaceFile != null) {
             replaceMap = new HashMap<>();
             replace2Map = new HashMap<>();
-            src = new BufferedReader(new InputStreamReader(replaceFile, "UTF-8"));
+            try (Scanner src = new Scanner(new InputStreamReader(replaceFile, StandardCharsets.UTF_8))) {
                 lineNum = 0;
-            try {
-                while ((line = src.readLine()) != null) {
+                while (src.hasNextLine()) {
+                    String line = src.nextLine();
                     lineNum++;
                     if (line.length() > 0 && line.charAt(0)!='#') {
                         try {
@@ -409,9 +414,11 @@ public class AozoraEpub3Converter
                         }
                     }
                 }
-            } finally {
-                src.close();
             }
+logger.fine("replaceMap: " + (replaceMap != null ? replaceMap.size() : 0));
+logger.fine("replace2Map: " + (replace2Map != null ? replace2Map.size() : 0));
+        } else {
+logger.info("no user replace.txt");
         }
 
         // 外字フォント一覧取得
