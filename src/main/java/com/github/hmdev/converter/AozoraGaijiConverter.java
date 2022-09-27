@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -131,9 +132,9 @@ public class AozoraGaijiConverter
             } else {
                 codes = code.split("-");
             }
-            return JisConverter.getConverter().toCharString(Integer.parseInt(codes[0]), Integer.parseInt(codes[1]), Integer.parseInt(codes[2]));
+            return JisConverter.toCharString(Integer.parseInt(codes[0]), Integer.parseInt(codes[1]), Integer.parseInt(codes[2]));
         }
-        } catch (Exception e) {}
+        } catch (Exception e) { e.printStackTrace(); }
         return null;
     }
 
@@ -144,7 +145,7 @@ public class AozoraGaijiConverter
         if (unicode == 0) return null;
         if (unicode > 0xFFFF) {
             byte[] b = new byte[]{0, (byte)(unicode>>16), (byte)(unicode>>8), (byte)(unicode)};
-            return new String(b, "UTF-32");
+            return new String(b, Charset.forName("UTF-32"));
         }
         return String.valueOf((char)unicode);
     }
@@ -152,14 +153,11 @@ public class AozoraGaijiConverter
     /** UTF-8のバイト配列のコード数値に変換 */
     public int charStringToCode(String charString)
     {
-        try {
-            return toCode(charString.getBytes("UTF-32"));
-        } catch (UnsupportedEncodingException e) {}
-        return 0;
+        return toCode(charString.getBytes(Charset.forName("UTF-32")));
     }
+
     public int toCode(byte[] utf32Bytes)
     {
         return ByteBuffer.wrap(utf32Bytes).getInt();
     }
-
 }

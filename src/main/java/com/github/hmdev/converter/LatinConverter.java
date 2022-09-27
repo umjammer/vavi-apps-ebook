@@ -3,7 +3,10 @@ package com.github.hmdev.converter;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.Scanner;
 import java.util.logging.Logger;
 
 /**
@@ -19,13 +22,11 @@ public class LatinConverter
      * int[]{横書き時のグリフのCID, 縦書き時(右90度)のグリフのCID} */
     HashMap<Character, String[]> latinCidMap = new HashMap<>();
 
-    public LatinConverter(String file) throws IOException
-    {
-        BufferedReader src = new BufferedReader(new InputStreamReader(LatinConverter.class.getResourceAsStream(file), "UTF-8"));
-        String line;
-        int lineNum = 0;
-        try {
-            while ((line = src.readLine()) != null) {
+    public LatinConverter(String file) {
+        try (Scanner src = new Scanner(new InputStreamReader(LatinConverter.class.getResourceAsStream(file), StandardCharsets.UTF_8))) {
+            int lineNum = 0;
+            while (src.hasNextLine()) {
+                String line = src.nextLine();
                 lineNum++;
                 if (line.length() > 0 && line.charAt(0)!='#') {
                     try {
@@ -38,8 +39,6 @@ public class LatinConverter
                     }
                 }
             }
-        } finally {
-            src.close();
         }
     }
 

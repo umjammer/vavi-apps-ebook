@@ -10,11 +10,11 @@ import java.util.logging.SimpleFormatter;
 
 
 /** ログ出力Wrapperクラス */
-public class LogAppender extends Handler {
+public final class LogAppender extends Handler {
 
     private Consumer<String> appendable;
 
-    Formatter formatter = new SimpleFormatter();
+    private final Formatter formatter = new SimpleFormatter();
 
     public LogAppender(Consumer<String> appendable) {
         setTarget(appendable);

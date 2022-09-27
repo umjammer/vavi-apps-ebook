@@ -42,10 +42,10 @@ public class ImageInfoReader
 
     /** テキストファイルの親のパス 末尾は"/"または空文字列
      *  txtなら絶対パス zipならentryのパス */
-    String srcParentPath = null;
+    String srcParentPath;
 
     /** Zipならzip内テキストの親entry ルートならnull */
-    public String archiveTextParentPath = "";
+    public String archiveTextParentPath;
 
     /** 出力順にファイル名を格納 imageFileInfosのkeyと同じ文字列 */
     List<String> imageFileNames;
@@ -56,8 +56,8 @@ public class ImageInfoReader
 
     /** 初期化 画像情報格納用のvectorとマップを生成
      * @param isFile 圧縮ファイル内ならfalse
-     * @param srcParentPath 変換するソースの親のパス
-     * @param archiveTextParentPath Zipならテキストファイルのentryの親のパス 圧縮ファイルで無い場合やルートならnull */
+     * @param srcFile 変換するソースの親のパス
+     */
     public ImageInfoReader(boolean isFile, File srcFile)
     {
         this.isFile = isFile;

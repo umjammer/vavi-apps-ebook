@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -35,7 +36,7 @@ public class AozoraEpub3Converter
 {
     static Logger logger = Logger.getLogger("com.github.hmdev");
 
-    //---------------- Properties ----------------//
+    // ---------------- Properties ----------------//
     /** UTF-8以外の文字を代替文字に変換 */
     boolean userAlterCharEscape = false;
 
@@ -118,16 +119,16 @@ public class AozoraEpub3Converter
     int forcePageBreakChapterSize = 0;
 
     /** 強制改行対象の空行後のパターン */
-    //Pattern forcePageBreakPattern = null;
+    // Pattern forcePageBreakPattern = null;
 
-    //---------------- Chapter Properties ----------------//
+    // ---------------- Chapter Properties ----------------//
     boolean autoChapterName = false;
     boolean autoChapterNumOnly = false;
     boolean autoChapterNumTitle = false;
     boolean autoChapterNumParen = false;
     boolean autoChapterNumParenTitle = false;
 
-    boolean excludeSeqencialChapter = true;
+    boolean excludeSequentialChapter = true;
     /** 次の行の文字列も繋げて目次の見出しにする */
     boolean useNextLineChapterName = true;
 
@@ -139,8 +140,8 @@ public class AozoraEpub3Converter
 
     boolean canceled = false;
 
-    //---------------- Chapter Infos ----------------//
-    //TODO パターンはファイルまたは設定から読み込む
+    // ---------------- Chapter Infos ----------------//
+    // TODO パターンはファイルまたは設定から読み込む
     /** 章の数値文字パターン */
     static final char[] chapterNumChar = {'0','1','2','3','4','5','6','7','8','9',
             '０','１','２','３','４','５','６','７','８','９',
@@ -163,7 +164,7 @@ public class AozoraEpub3Converter
     /** 章の注記と目次階層レベル指定 大見出し 中見出し 小見出し 見出し */
     Map<String, Integer> chapterChukiMap = null;
 
-    //---------------- Flags Variables ----------------//
+    // ---------------- Flags Variables ----------------//
     /** 字下げ 字下げ開始した行番号を入れておく */
     int inJisage = -1;
     /** 横組み内 */
@@ -174,7 +175,7 @@ public class AozoraEpub3Converter
     /** 自動縦中横抑止終了 */
     Set<Integer> noTcyEnd = new HashSet<>();
 
-    //---------------- パターン ----------------//
+    // ---------------- パターン ----------------//
     /** 注記パターン */
     final static Pattern chukiPattern = Pattern.compile("(［＃.+?］)|(<.+?>)");
     /** 外字注記パターン */
@@ -189,7 +190,7 @@ public class AozoraEpub3Converter
     /** ファイル名 [著作者] 表題.txt から抽出するパターン */
     final static Pattern fileNamePattern = Pattern.compile("\\[(.+?)\\]( |　)*(.+?)(\\(|（|\\.)");
 
-    //---------------- 変換用テーブル ----------------//
+    // ---------------- 変換用テーブル ----------------//
     /** 変換関連が初期化済みならtrue */
     static boolean inited = false;
 
@@ -249,7 +250,7 @@ public class AozoraEpub3Converter
     /** Epub圧縮出力用クラス */
     Epub3Writer writer;
 
-    ////////////////////////////////
+    // /// /// /// /// /// /// /// /// /// ///
     // 変換前に初期化すること
     /** BookInfo */
     BookInfo bookInfo;
@@ -259,7 +260,7 @@ public class AozoraEpub3Converter
     /** 現在処理中の行番号 */
     public int lineNum;
 
-    //セクション毎に初期化
+    // セクション毎に初期化
     /** 改ページ後の文字数 */
     int pageByteSize;
     /** セクション内の文字数(変換前の注記タグ含む) 空ページチェック用 */
@@ -274,8 +275,8 @@ public class AozoraEpub3Converter
     /** キャプション出力中で画像タグが閉じていないならtrue */
     boolean inImageTag = false;
 
-    ////////////////////////////////
-    //改ページトリガ ファイル名は入れ替えて利用する
+    // /// /// /// /// /// /// /// /// /// ///
+    // 改ページトリガ ファイル名は入れ替えて利用する
     /** 改ページ通常 */
     final static PageBreakType pageBreakNormal = new PageBreakType(true, 0, PageBreakType.IMAGE_PAGE_NONE);
     /** 改ページ左右中央 */
@@ -295,42 +296,41 @@ public class AozoraEpub3Converter
 
     /** 見出し仮対応出力用
      * 章の最初の本文をsetChapterNameでセットしたらtrue */
-    //boolean chapterStarted = true;
+    // boolean chapterStarted = true;
 
     /** コンストラクタ
      * 変換テーブルやクラスがstaticで初期化されていなければ初期化
-     * @param _msgBuf ログ出力用バッファ
      * @throws IOException */
     public AozoraEpub3Converter(Epub3Writer writer, String jarPath) throws IOException
     {
         this.writer = writer;
 
-        //初期化されていたら終了
+        // 初期化されていたら終了
         if (inited) return;
 
-        //拡張ラテン変換
+        // 拡張ラテン変換
         latinConverter = new LatinConverter("/chuki_latin.txt");
 
         gaijiConverter = new AozoraGaijiConverter(jarPath);
 
-        //注記タグ変換
+        // 注記タグ変換
         InputStream chukiTagFile = AozoraEpub3Converter.class.getResourceAsStream("/chuki_tag.txt");
         BufferedReader src = new BufferedReader(new InputStreamReader(chukiTagFile, "UTF-8"));
-        String line;
-        int lineNum = 0;
+            String line;
+            int lineNum = 0;
         try {
             while ((line = src.readLine()) != null) {
                 lineNum++;
                 if (line.length() > 0 && line.charAt(0)!='#') {
                     try {
                         String[] values = line.split("\t");
-                        //タグ取得 3列目は行末タグ
+                        // タグ取得 3列目は行末タグ
                         String[] tags;
                         if (values.length == 1) tags = new String[]{""};
                         else if (values.length > 2 && values[2].length() > 0) tags = new String[]{values[1], values[2]};
                         else tags = new String[]{values[1]};
                         chukiMap.put(values[0], tags);
-                        //注記フラグ
+                        // 注記フラグ
                         if (values.length > 3 && values[3].length() > 0) {
                             switch (values[3].charAt(0)) {
                             case '1': chukiFlagNoBr.add(values[0]); break;
@@ -351,28 +351,28 @@ public class AozoraEpub3Converter
         } finally {
             src.close();
         }
-        //TODO パターンとprintfのFormatを設定ファイルから読み込みできるようにする (printfの引数の演算処理はフラグで切り替え？)
+        // TODO パターンとprintfのFormatを設定ファイルから読み込みできるようにする (printfの引数の演算処理はフラグで切り替え？)
         chukiPatternMap.put("折り返し", Pattern.compile("^［＃ここから([０-９]+)字下げ、折り返して([０-９]+)字下げ(.*)］"));
         chukiPatternMap.put("字下げ字詰め", Pattern.compile("^［＃ここから([０-９]+)字下げ、([０-９]+)字詰め.*］"));
         chukiPatternMap.put("字下げ複合", Pattern.compile("^［＃ここから([０-９]+)字下げ.*］"));
         chukiPatternMap.put("字下げ終わり複合", Pattern.compile("^［＃ここで字下げ.*終わり"));
 
-        //前方参照注記
+        // 前方参照注記
         InputStream chukiSufFile = AozoraEpub3Converter.class.getResourceAsStream("/chuki_tag_suf.txt");
         src = new BufferedReader(new InputStreamReader(chukiSufFile, "UTF-8"));
-        lineNum = 0;
+            lineNum = 0;
         try {
             while ((line = src.readLine()) != null) {
                 lineNum++;
                 if (line.length() > 0 && line.charAt(0)!='#') {
                     try {
                         String[] values = line.split("\t");
-                        //タグ取得 3列目は行末タグ
+                        // タグ取得 3列目は行末タグ
                         String[] tags;
                         if (values.length > 2 && values[2].length() > 0) tags = new String[]{values[1], values[2]};
                         else tags = new String[]{values[1]};
                         sufChukiMap.put(values[0], tags);
-                        //別名
+                        // 別名
                         if (values.length > 3 && values[3].length() > 0) sufChukiMap.put(values[3]+values[0], tags);
 
                     } catch (Exception e) {
@@ -390,7 +390,7 @@ public class AozoraEpub3Converter
             replaceMap = new HashMap<>();
             replace2Map = new HashMap<>();
             src = new BufferedReader(new InputStreamReader(replaceFile, "UTF-8"));
-            lineNum = 0;
+                lineNum = 0;
             try {
                 while ((line = src.readLine()) != null) {
                     lineNum++;
@@ -414,13 +414,14 @@ public class AozoraEpub3Converter
             }
         }
 
-        //外字フォント一覧取得
+        // 外字フォント一覧取得
         Collection<String> rs = ResourceList.getResources(Pattern.compile(writer.getGaijiFontPath()));
         utf16FontMap = new HashMap<>();
         utf32FontMap = new HashMap<>();
         ivs16FontMap = new HashMap<>();
         ivs32FontMap = new HashMap<>();
         for (String fontFile : rs) {
+logger.fine("fontFile: " + fontFile);
             if (!fontFile.endsWith(File.separator)) {
                 String fileName = fontFile.substring(fontFile.lastIndexOf(File.separator) + 1).toLowerCase();
                 logger.fine("gaiji folder: " + fileName);
@@ -428,23 +429,26 @@ public class AozoraEpub3Converter
                 if ("ttf".equals(ext) || "ttc".equals(ext) || "otf".equals(ext)) {
                     if (fileName.startsWith("u")){
                         if (fileName.indexOf("-u") > 0) {
+                            // uXXXX-uXXXX.ext
                             String className = fileName.substring(1, fileName.length()-ext.length()-1);
                             String[] strs = className.split("-u");
                             if (strs.length > 2) {
-                                logger.warning(-1 + " IVS以外の合成フォントは対応しません: " + Arrays.toString(strs) + " " + fileName);
+                                logger.warning(-1 + " IVS以外の合成フォントは対応しません: [" + Arrays.toString(strs) + "], " + strs.length + ", " + fileName);
                             } else {
                                 int[] codes = new int[]{Integer.parseInt(strs[0], 16), Integer.parseInt(strs[1], 16)};
                                 if (0xe0100 <= codes[1] && codes[1] <= 0xe01ef) {
+                                    // ue{0100~01ef}-uXXXX.ext
                                     if (codes[0] < 0xFFFF) {
                                         ivs16FontMap.put("u"+className, fontFile);
                                     } else {
                                         ivs32FontMap.put("u"+className, fontFile);
                                     }
                                 } else {
-                                    logger.warning(-1 + String.format(" IVS以外の合成フォントは対応しません: %04x, %04x", codes[0], codes[1]) + " " + fileName);
+                                    logger.warning(-1 + String.format(" IVS以外の合成フォントは対応しません: [%04x, %04x]", codes[0], codes[1]) + ", " + fileName);
                                 }
                             }
                         } else {
+                            // uXXXX.ext
                             int code = 0;
                             try { code = Integer.valueOf(fileName.substring(1, fileName.length()-ext.length()-1), 16); } catch (Exception e) {}
                             if (code <= 0xFFFF) {
@@ -499,7 +503,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
         this.autoYokoEQ1 = autoYokoEQ1;
     }
     /** 文字出力設定
-     * @param dakuten 濁点出力設定 0=そのまま 1=重ねる 2=フォント利用 */
+     * @param dakutenType 濁点出力設定 0=そのまま 1=重ねる 2=フォント利用 */
     public void setCharOutput(int dakutenType, boolean printIvsBMP, boolean printIvsSSP)
     {
         this.dakutenType = dakutenType;
@@ -539,7 +543,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
         this.maxChapterNameLength = maxLength;
 
         this.chapterSection = section;
-        //見出し
+        // 見出し
         if (chapterChukiMap == null) chapterChukiMap = new HashMap<>();
         else chapterChukiMap.clear();
         if (h) {
@@ -564,7 +568,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
         }
 
         this.useNextLineChapterName = useNextLineChapterName;
-        this.excludeSeqencialChapter = excludeSeqencialChapter;
+        this.excludeSequentialChapter = excludeSeqencialChapter;
 
         this.autoChapterName = chapterName;
         this.autoChapterNumOnly = autoChapterNumOnly;
@@ -602,10 +606,10 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
         this.forcePageBreakEmptySize = emptySize;
         this.forcePageBreakChapterLevel = chapterLevel;
         this.forcePageBreakChapterSize = chapterSize;
-        //this.forcePageBreakPattern = pattern;
+        // this.forcePageBreakPattern = pattern;
 
         this.forcePageBreak  = forcePageBreakSize > 0 || (emptyLine > 0 && emptySize > 0) || (chapterLevel > 0 && chapterSize > 0);
-        //行での強制改行は他の改行設定より大きくする
+        // 行での強制改行は他の改行設定より大きくする
         if (emptyLine > 0) this.forcePageBreakSize = Math.max(this.forcePageBreakSize, emptySize);
         if (chapterLevel > 0) this.forcePageBreakSize = Math.max(this.forcePageBreakSize, chapterSize);
     }
@@ -615,7 +619,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
      * @param src 青空テキストファイルのReader
      * @param imageInfoReader テキスト内の画像ファイル名を格納して返却
      * @param titleType 表題種別
-     * @param coverFileName 表紙ファイル名 nullなら表紙無し ""は先頭ファイル "*"は同じファイル名 */
+     */
     public BookInfo getBookInfo(File srcFile, BufferedReader src, ImageInfoReader imageInfoReader, TitleType titleType, boolean pubFirst) throws Exception
     {
         try {
@@ -623,70 +627,70 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
 
         String line;
         this.lineNum = -1;
-        //前の行のバッファ [1行前, 2行前]
+        // 前の行のバッファ [1行前, 2行前]
         String[] preLines = { null, null };
 
-        //コメントブロック内
+        // コメントブロック内
         boolean inComment = false;
-        //コメントが始まったらtrue
+        // コメントが始まったらtrue
         boolean firstCommentStarted = false;
 
-        //最初のコメント開始行
+        // 最初のコメント開始行
         int firstCommentLineNum = -1;
 
-        //先頭行
+        // 先頭行
         String[] firstLines = new String[10];
-        //先頭行の開始行番号
+        // 先頭行の開始行番号
         int firstLineStart = -1;
 
-        //タイトルページ開始行 画像等がなければ-1 タイトルなしは-2
-        //int preTitlePageBreak = titleType==TitleType.NONE ? -2 : -1;
+        // タイトルページ開始行 画像等がなければ-1 タイトルなしは-2
+        // int preTitlePageBreak = titleType==TitleType.NONE ? -2 : -1;
 
-        //コメント内の行数
+        // コメント内の行数
         int commentLineNum = 0;
-        //コメント開始行
+        // コメント開始行
         int commentLineStart = -1;
 
-        //直線の空行
+        // 直線の空行
         int lastEmptyLine = -1;
 
-        //目次用見出し自動抽出
+        // 目次用見出し自動抽出
         boolean autoChapter = this.autoChapterName || this.autoChapterNumTitle || this.autoChapterNumOnly || this.autoChapterNumParen || this.autoChapterNumParenTitle || this.chapterPattern != null;
-        //改ページ後の目次を追加するならtrue
+        // 改ページ後の目次を追加するならtrue
         boolean addSectionChapter = true;
-        //見出し注記の後の文字を追加
+        // 見出し注記の後の文字を追加
         boolean addChapterName = false;
-        //見出しの次の行を繋げるときに見出しの次の行番号を設定
+        // 見出しの次の行を繋げるときに見出しの次の行番号を設定
         int addNextChapterName = -1;
-        //ブロック見出し注記、次の行を繋げる場合に設定
+        // ブロック見出し注記、次の行を繋げる場合に設定
         ChapterLineInfo preChapterLineInfo = null;
 
-        //最後まで回す
+        // 最後まで回す
         while ((line = src.readLine()) != null) {
             this.lineNum++;
 
-            //見出し等の取得のため前方参照注記は変換 外字文字は置換
+            // 見出し等の取得のため前方参照注記は変換 外字文字は置換
             line = CharUtils.removeSpace(this.replaceChukiSufTag(this.convertGaijiChuki(line, true, false)));
-            //注記と画像のチェックなので先にルビ除去
+            // 注記と画像のチェックなので先にルビ除去
             String noRubyLine = CharUtils.removeRuby(line);
 
-            //コメント除外 50文字以上をコメントにする
+            // コメント除外 50文字以上をコメントにする
             if (noRubyLine.startsWith("--------------------------------")) {
                 if (!noRubyLine.startsWith("--------------------------------------------------")) {
                     logger.warning(lineNum + " コメント行の文字数が足りません");
                 } else {
                     if (firstCommentLineNum == -1) firstCommentLineNum = this.lineNum;
-                    //コメントブロックに入ったらタイトル著者終了
+                    // コメントブロックに入ったらタイトル著者終了
                     firstCommentStarted = true;
                     if (inComment) {
-                        //コメント行終了
+                        // コメント行終了
                         if (commentLineNum > 20) logger.warning(lineNum + " コメントが "+commentLineNum + " 行 ("+(commentLineStart+1)+") -");
                         commentLineNum = 0;
                         inComment = false; continue;
                     }
                     else {
                         if (lineNum > 10 && !(commentPrint && commentConvert)) logger.warning(lineNum + " コメント開始行が10行目以降にあります");
-                        //コメント行開始
+                        // コメント行開始
                         commentLineStart = this.lineNum;
                         inComment = true;
                         continue;
@@ -695,48 +699,48 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                 if (inComment) commentLineNum++;
             }
 
-            //空行チェック
+            // 空行チェック
             if (noRubyLine.equals("") || noRubyLine.equals(" ") || noRubyLine.equals("　")) {
                 lastEmptyLine = lineNum;
-                //空行なので次の行へ
+                // 空行なので次の行へ
                 continue;
             }
 
             if (inComment && !this.commentPrint) continue;
 
-            //2行前が改ページと画像の行かをチェックして行番号をbookInfoに保存
+            // 2行前が改ページと画像の行かをチェックして行番号をbookInfoに保存
             if (!noIllust) this.checkImageOnly(bookInfo, preLines, noRubyLine, this.lineNum);
 
-            //見出しのChapter追加
+            // 見出しのChapter追加
             if (addChapterName) {
                 if (preChapterLineInfo == null) addChapterName = false; // 前の見出しがなければ中止
                 else {
                     String name = this.getChapterName(noRubyLine);
-                    //字下げ注記等は飛ばして次の行を見る
+                    // 字下げ注記等は飛ばして次の行を見る
                     if (name.length() > 0) {
                         preChapterLineInfo.setChapterName(name);
                         preChapterLineInfo.lineNum = lineNum;
                         addChapterName = false;
-                        //次の行を繋げる設定
+                        // 次の行を繋げる設定
                         if (this.useNextLineChapterName) addNextChapterName = lineNum+1;
                         addSectionChapter = false; // 改ページ後のChapter出力を抑止
                     }
-                    //必ず文字が入る
+                    // 必ず文字が入る
                     preChapterLineInfo = null;
                 }
             }
-            //画像のファイル名の順にimageInfoReaderにファイル名を追加
+            // 画像のファイル名の順にimageInfoReaderにファイル名を追加
             Matcher m = chukiPattern.matcher(noRubyLine);
             while (m.find()) {
                 String chukiTag = m.group();
                 String chukiName = chukiTag.substring(2, chukiTag.length()-1);
 
                 if (chukiFlagPageBreak.contains(chukiName)) {
-                    //改ページ注記ならフラグON
+                    // 改ページ注記ならフラグON
                     addSectionChapter = true;
                 } else if (chapterChukiMap.containsKey(chukiName)) {
-                    //見出し注記
-                    //注記の後に文字がなければブロックなので次の行 (次の行にブロック注記はこない？)
+                    // 見出し注記
+                    // 注記の後に文字がなければブロックなので次の行 (次の行にブロック注記はこない？)
                     int chapterType = chapterChukiMap.get(chukiName);
                     if (noRubyLine.length() == m.start()+chukiTag.length())  {
                         preChapterLineInfo = new ChapterLineInfo(lineNum+1, chapterType, addSectionChapter, ChapterLineInfo.getLevel(chapterType), lastEmptyLine==lineNum-1);
@@ -758,14 +762,14 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                 if (imageStartIdx > -1) {
                     int imageEndIdx = chukiTag.indexOf("）", imageStartIdx);
                     int imageDotIdx = chukiTag.indexOf('.', imageStartIdx);
-                    //訓点送り仮名チェック ＃の次が（で.を含まない
+                    // 訓点送り仮名チェック ＃の次が（で.を含まない
                     if (imageDotIdx > -1 && imageDotIdx < imageEndIdx) {
-                        //画像ファイル名を取得し画像情報を格納
+                        // 画像ファイル名を取得し画像情報を格納
                         String imageFileName = this.getImageChukiFileName(chukiTag, imageStartIdx);
                         if (imageFileName != null) {
                             imageInfoReader.addImageFileName(imageFileName);
                             if (bookInfo.firstImageLineNum == -1) {
-                                //小さい画像は無視
+                                // 小さい画像は無視
                                 ImageInfo imageInfo = imageInfoReader.getImageInfo(imageInfoReader.correctExt(imageFileName));
                                 if (imageInfo != null && imageInfo.getWidth() > 64 && imageInfo.getHeight() > 64) {
                                     bookInfo.firstImageLineNum = lineNum;
@@ -775,12 +779,12 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                         }
                     }
                 } else if (lowerChukiTag.startsWith("<img")) {
-                    //src=の値抽出
+                    // src=の値抽出
                     String imageFileName = this.getTagAttr(chukiTag, "src");
                     if (imageFileName != null) {
                         imageInfoReader.addImageFileName(imageFileName); // 画像がなければそのまま追加
                         if (bookInfo.firstImageLineNum == -1) {
-                            //小さい画像は無視
+                            // 小さい画像は無視
                             ImageInfo imageInfo = imageInfoReader.getImageInfo(imageInfoReader.correctExt(imageFileName));
                             if (imageInfo != null && imageInfo.getWidth() > 64 && imageInfo.getHeight() > 64) {
                                 bookInfo.firstImageLineNum = lineNum;
@@ -791,13 +795,13 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                 }
             }
 
-            //見出し行パターン抽出 パターン抽出時はレベル+10
-            //TODO パターンと目次レベルは設定可能にする 空行指定の場合はpreLines利用
+            // 見出し行パターン抽出 パターン抽出時はレベル+10
+            // TODO パターンと目次レベルは設定可能にする 空行指定の場合はpreLines利用
             if (autoChapter && bookInfo.getChapterLevel(lineNum) == 0) {
-                //文字列から注記と前の空白を除去
+                // 文字列から注記と前の空白を除去
                 String noChukiLine = CharUtils.removeSpace(CharUtils.removeTag(noRubyLine));
 
-                //その他パターン
+                // その他パターン
                 if (this.chapterPattern != null) {
                     if (this.chapterPattern.matcher(noChukiLine).find()) {
                         bookInfo.addChapterLineInfo(new ChapterLineInfo(lineNum, ChapterLineInfo.TYPE_PATTERN, addSectionChapter, ChapterLineInfo.getLevel(ChapterLineInfo.TYPE_PATTERN), lastEmptyLine==lineNum-1, this.getChapterName(noRubyLine)));
@@ -808,24 +812,28 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                 int noChukiLineLength = noChukiLine.length();
                 if (this.autoChapterName) {
                     boolean isChapter = false;
-                    //数字を含まない章名
-                    for (int i=0; i<chapterName.length; i++) {
-                        String prefix = chapterName[i];
+                    // 数字を含まない章名
+                    for (String prefix : chapterName) {
                         if (noChukiLine.startsWith(prefix)) {
-                            if (noChukiLine.length() == prefix.length()) { isChapter = true; break; }
-                            else if (isChapterSeparator(noChukiLine.charAt(prefix.length()))) { isChapter = true; break; }
+                            if (noChukiLine.length() == prefix.length()) {
+                                isChapter = true;
+                                break;
+                            } else if (isChapterSeparator(noChukiLine.charAt(prefix.length()))) {
+                                isChapter = true;
+                                break;
+                            }
                         }
                     }
-                    //数字を含む章名
+                    // 数字を含む章名
                     if (!isChapter) {
                         for (int i=0; i<chapterNumPrefix.length; i++) {
                             String prefix = chapterNumPrefix[i];
                             if (noChukiLine.startsWith(prefix)) {
                                 int idx = prefix.length();
-                                //次が数字かチェック
+                                // 次が数字かチェック
                                 while (noChukiLineLength > idx && isChapterNum(noChukiLine.charAt(idx))) idx++;
                                 if (idx <= prefix.length()) break; // 数字がなければ抽出しない
-                                //後ろをチェック prefixに対応するsuffixで回す
+                                // 後ろをチェック prefixに対応するsuffixで回す
                                 for (String suffix : chapterNumSuffix[i]) {
                                     if (!"".equals(suffix)) {
                                         if (noChukiLine.substring(idx).startsWith(suffix)) {
@@ -849,7 +857,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                     }
                 }
                 if (this.autoChapterNumOnly || this.autoChapterNumTitle) {
-                    //数字
+                    // 数字
                     int idx = 0;
                     while (noChukiLineLength > idx && isChapterNum(noChukiLine.charAt(idx))) idx++;
                     if (idx > 0) {
@@ -863,15 +871,15 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                     }
                 }
                 if (this.autoChapterNumParen || this.autoChapterNumParenTitle) {
-                    //括弧内数字のみ
+                    // 括弧内数字のみ
                     for (int i=0; i<chapterNumParenPrefix.length; i++) {
                         String prefix = chapterNumParenPrefix[i];
                         if (noChukiLine.startsWith(prefix)) {
                             int idx = prefix.length();
-                            //次が数字かチェック
+                            // 次が数字かチェック
                             while (noChukiLineLength > idx && isChapterNum(noChukiLine.charAt(idx))) idx++;
                             if (idx <= prefix.length()) break; // 数字がなければ抽出しない
-                            //後ろをチェック
+                            // 後ろをチェック
                             String suffix = chapterNumParenSuffix[i];
                             if (noChukiLine.substring(idx).startsWith(suffix)) {
                                 idx += suffix.length();
@@ -887,13 +895,13 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                     }
                 }
             }
-            //改ページ後の注記以外の本文を追加
+            // 改ページ後の注記以外の本文を追加
             if (this.chapterSection && addSectionChapter) {
-                //底本：は目次に出さない
+                // 底本：は目次に出さない
                 if (noRubyLine.length() > 2 && noRubyLine.charAt(0)=='底' && noRubyLine.charAt(1)=='本' && noRubyLine.charAt(2)=='：' ) {
                     addSectionChapter = false; // 改ページ後のChapter出力を抑止
                 } else {
-                    //記号のみの行は無視して次の行へ
+                    // 記号のみの行は無視して次の行へ
                     String name = this.getChapterName(noRubyLine);
                     if (name.replaceAll("◇|◆|□|■|▽|▼|☆|★|＊|＋|×|†|　", "").length() > 0) {
                         bookInfo.addChapterLineInfo(new ChapterLineInfo(lineNum, ChapterLineInfo.TYPE_PAGEBREAK, true, 1, lastEmptyLine==lineNum-1, name));
@@ -903,9 +911,9 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                 }
             }
 
-            //見出しの次の行＆見出しでない
+            // 見出しの次の行＆見出しでない
             if (addNextChapterName == lineNum && bookInfo.getChapterLineInfo(lineNum) == null) {
-                //見出しの次の行を繋げる
+                // 見出しの次の行を繋げる
                 String name = this.getChapterName(noRubyLine);
                 if (name.length() > 0) {
                     ChapterLineInfo info = bookInfo.getChapterLineInfo(lineNum-1);
@@ -914,21 +922,21 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                 addNextChapterName = -1;
             }
 
-            //コメント行の後はタイトル取得はしない
+            // コメント行の後はタイトル取得はしない
             if (!firstCommentStarted) {
                 String replaced = CharUtils.getChapterName(noRubyLine, 0);
                 if (firstLineStart == -1) {
-                    //改ページチェック
-                    //タイトル前の改ページ位置を保存
-                    //if (isPageBreakLine(noRubyLine))
+                    // 改ページチェック
+                    // タイトル前の改ページ位置を保存
+                    // if (isPageBreakLine(noRubyLine))
                     //    preTitlePageBreak = lineNum;
-                    //文字の行が来たら先頭行開始
+                    // 文字の行が来たら先頭行開始
                     if (replaced.length() > 0) {
                         firstLineStart = this.lineNum;
                         firstLines[0] = line;
                     }
                 } else {
-                    //改ページで終了
+                    // 改ページで終了
                     if (isPageBreakLine(noRubyLine)) firstCommentStarted = true;
                     if (this.lineNum-firstLineStart > firstLines.length-1) {
                         firstCommentStarted = true;
@@ -937,29 +945,29 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                     }
                 }
             }
-            //前の2行を保存
+            // 前の2行を保存
             preLines[1] = preLines[0];
             preLines[0] = noRubyLine;
         }
 
-        //行数設定
+        // 行数設定
         bookInfo.totalLineNum = lineNum;
 
         if (inComment) {
             logger.severe(commentLineStart + " コメントが閉じていません");
         }
 
-        //表題と著者を先頭行から設定
+        // 表題と著者を先頭行から設定
         bookInfo.setMetaInfo(titleType, pubFirst, firstLines, firstLineStart, firstCommentLineNum);
-        //bookInfo.preTitlePageBreak = preTitlePageBreak; // タイトルがあればタイトル前の改ページ状況を設定
+        // bookInfo.preTitlePageBreak = preTitlePageBreak; // タイトルがあればタイトル前の改ページ状況を設定
 
-        //タイトルのChapter追加
+        // タイトルのChapter追加
         if (bookInfo.titleLine > -1) {
             String name = this.getChapterName(bookInfo.title);
             ChapterLineInfo chapterLineInfo = bookInfo.getChapterLineInfo(bookInfo.titleLine);
             if (chapterLineInfo == null) bookInfo.addChapterLineInfo(new ChapterLineInfo(bookInfo.titleLine, ChapterLineInfo.TYPE_TITLE, true, 0, false, name));
             else { chapterLineInfo.type = ChapterLineInfo.TYPE_TITLE; chapterLineInfo.level = 0; }
-            //1行目がタイトルでなければ除外
+            // 1行目がタイトルでなければ除外
             if (bookInfo.titleLine > 0) {
                 for (int i=bookInfo.titleLine-1; i>=0; i--) bookInfo.removeChapterLineInfo(i);
             }
@@ -969,9 +977,9 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
         if (bookInfo.subTitleLine > 0) bookInfo.removeChapterLineInfo(bookInfo.subTitleLine);
         if (bookInfo.subOrgTitleLine > 0) bookInfo.removeChapterLineInfo(bookInfo.subOrgTitleLine);
 
-        //目次ページの見出しを除外
-        //前後2行前と2行後に3つ以上に抽出した見出しがある場合連続する見出しを除去
-        if (this.excludeSeqencialChapter) bookInfo.excludeTocChapter();
+        // 目次ページの見出しを除外
+        // 前後2行前と2行後に3つ以上に抽出した見出しがある場合連続する見出しを除去
+        if (this.excludeSequentialChapter) bookInfo.excludeTocChapter();
 
         return bookInfo;
         } catch (Exception e) {
@@ -1008,7 +1016,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
     private boolean isPageBreakLine(String line)
     {
         Matcher m = chukiLeftPattern.matcher(line);
-        while (m.find()) {
+        if (m.find()) {
             return chukiFlagPageBreak.contains(m.group(1));
         }
         return false;
@@ -1017,21 +1025,21 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
     /** 改ページ処理があったら次のセクションの情報をbookInfoに追加 */
     private void checkImageOnly(BookInfo bookInfo, String[] preLines, String line, int lineNum)
     {
-        //現在の行が改ページ
+        // 現在の行が改ページ
         if (preLines[0] == null) return;
         if (line.indexOf('］') <= 3) return;
         String curChuki = line.substring(2, line.indexOf('］')); // 現在行の行頭注記
         if (chukiFlagPageBreak.contains(curChuki)) {
-            //2行前の行末が改ページまたは現在行が先頭から2行目
+            // 2行前の行末が改ページまたは現在行が先頭から2行目
             if (preLines[1] == null ||
                 (preLines[1].indexOf('］') > 3 && chukiFlagPageBreak.contains(preLines[1].substring(preLines[1].lastIndexOf('＃')+1, preLines[1].length()-1)))
                 ) {
-                //1行前が画像
+                // 1行前が画像
                 if (
                     (preLines[0].startsWith("［＃") && preLines[0].matches("^［＃.*（.+\\..+") && preLines[0].indexOf('］') == preLines[0].length()-1) ||
                     (preLines[0].toLowerCase().startsWith("<img") && preLines[0].indexOf('>') == preLines[0].length()-1)
                 ) {
-                    //画像単一ページの画像行に設定
+                    // 画像単一ページの画像行に設定
                     String fileName = null;
                     if (preLines[0].toLowerCase().startsWith("<img")) {
                         fileName = getTagAttr(preLines[0], "src");
@@ -1077,9 +1085,9 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
         return null;
     }
 
-    ////////////////////////////////////////////////////////////////
+    // /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// //
     //    変換処理
-    ////////////////////////////////////////////////////////////////
+    // /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// //
     public void cancel()
     {
         this.canceled = true;
@@ -1093,75 +1101,75 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
     {
         try {
 
-        //ダミー切り替え用
+        // ダミー切り替え用
         BufferedWriter orgOut = out;
 
         this.canceled = false;
 
-        //BookInfoの参照を保持
+        // BookInfoの参照を保持
         this.bookInfo = bookInfo;
 
         String line;
 
-        ////////////////////////////////
-        //変換開始字のメンバ変数の初期化
+        // /// /// /// /// /// /// /// /// /// ///
+        // 変換開始字のメンバ変数の初期化
         this.pageByteSize = 0;
         this.sectionCharLength = 0;
         this.lineNum = -1;
         this.lineIdNum = 1;
         this.tagLevel = 0;
         this.inJisage = -1;
-        //最初のページの改ページフラグを設定
+        // 最初のページの改ページフラグを設定
         this.setPageBreakTrigger(pageBreakNormal);
-        ////////////////////////////////
+        // /// /// /// /// /// /// /// /// /// ///
 
-        //直前のtagLevel=0の行
+        // 直前のtagLevel=0の行
         int lastZeroTagLevelLineNum = -1;
 
-        //タイトル目の画像等をバッファ
+        // タイトル目の画像等をバッファ
         List<String> preTitleBuf = null;
 
-        //コメントブロック内
+        // コメントブロック内
         boolean inComment = false;
 
-        //タイトルを出力しない
+        // タイトルを出力しない
         boolean skipTitle = false;
-        //バッファ中は画像は処理しない
+        // バッファ中は画像は処理しない
         boolean noImage = false;
 
-        //表題をバッファ処理
+        // 表題をバッファ処理
         if ((this.bookInfo.titlePageType == BookInfo.TITLE_NONE || this.bookInfo.titlePageType == BookInfo.TITLE_MIDDLE || this.bookInfo.titlePageType == BookInfo.TITLE_HORIZONTAL)) {
-            //ページ出力設定
+            // ページ出力設定
             bookInfo.insertTitlePage = true;
-            //開始位置がタグの中なら次の行へ
+            // 開始位置がタグの中なら次の行へ
             skipTitle = true;
-            //outがnullなら改ページと出力はされない
+            // outがnullなら改ページと出力はされない
             out = null;
-            //バッファ
+            // バッファ
             preTitleBuf = new ArrayList<>();
             noImage = true;
         }
 
-        //先頭行取得
+        // 先頭行取得
         line = src.readLine();
         if (line == null) {
             return;
         }
-        //BOM除去
+        // BOM除去
         line = CharUtils.removeBOM(line);
         do {
             lineNum++;
 
             if (skipTitle) {
-                //タイトル文字行前までバッファ
+                // タイトル文字行前までバッファ
                 if (bookInfo.metaLineStart > lineNum) {
                     preTitleBuf.add(line);
                 }
-                //タイトル文字行 前の行のバッファがあれば出力
+                // タイトル文字行 前の行のバッファがあれば出力
                 if (bookInfo.metaLineStart == lineNum && preTitleBuf.size() > 0) {
                     noImage = false;
                     if (lastZeroTagLevelLineNum >= 0) {
-                        //タイトル行前のtagLevel=0の行以前のバッファを出力
+                        // タイトル行前のtagLevel=0の行以前のバッファを出力
                         int lineNumBak = this.lineNum;
                         this.pageByteSize = 0;
                         this.sectionCharLength = 0;
@@ -1171,7 +1179,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                         this.inJisage = -1;
                         int i = 0;
                         while (this.lineNum < lineNumBak) {
-                            //出力しない行を飛ばす
+                            // 出力しない行を飛ばす
                             if (bookInfo.isIgnoreLine(lineNum)) continue;
                             if (this.lineNum <= lastZeroTagLevelLineNum)
                                 convertTextLineToEpub3(orgOut, preTitleBuf.get(i++), this.lineNum, false, false);
@@ -1183,12 +1191,12 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                     }
                     preTitleBuf.clear();
                 }
-                //タイトルページの改ページ
+                // タイトルページの改ページ
                 if (bookInfo.titleEndLine+1 == lineNum) {
                     if (tagLevel > 0) bookInfo.titleEndLine++;
                     else {
                         skipTitle = false;
-                        //ダミーから戻す
+                        // ダミーから戻す
                         out = orgOut;
                         noImage = false;
                         bookInfo.addPageBreakLine(bookInfo.titleEndLine+1);
@@ -1196,14 +1204,14 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                 }
             }
 
-            //改ページ指定行なら改ページフラグ設定 タグ内は次の行へ
+            // 改ページ指定行なら改ページフラグ設定 タグ内は次の行へ
             if (bookInfo.isPageBreakLine(lineNum) && this.sectionCharLength > 0) {
-                //タグの中なら次の行へ
+                // タグの中なら次の行へ
                 if (this.tagLevel == 0) this.setPageBreakTrigger(pageBreakNormal);
                 else bookInfo.addPageBreakLine(lineNum+1);
             }
 
-            //コメント除外
+            // コメント除外
             if (line.startsWith("--------------------------------------------------")) {
                 if (commentPrint) {
                     if (inComment) { inComment = false; }
@@ -1211,7 +1219,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                 } else {
                     if (inComment) { inComment = false; continue;
                     } else {
-                        //コメント開始
+                        // コメント開始
                         inComment = true; continue;
                     }
                 }
@@ -1219,15 +1227,15 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
             if (inComment) {
                 if (commentPrint) {
                     if (!commentConvert) {
-                        //そのまま出力
+                        // そのまま出力
                         StringBuilder buf = new StringBuilder();
                         char[] ch = line.toCharArray();
-                        for (int idx=0; idx<ch.length; idx++) {
-                            switch (ch[idx]) {
+                        for (char c : ch) {
+                            switch (c) {
                             case '&': buf.append("&amp;"); break;
                             case '<': buf.append("&lt;"); break;
                             case '>': buf.append("&gt;"); break;
-                            default: buf.append(ch[idx]);
+                            default: buf.append(c);
                             }
                         }
                         this.printLineBuffer(out, buf, lineNum, false);
@@ -1238,7 +1246,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                 }
             }
 
-            //出力しない行を飛ばす
+            // 出力しない行を飛ばす
             if (bookInfo.isIgnoreLine(lineNum)) continue;
 
             if (lineNum == bookInfo.titleLine) {
@@ -1321,10 +1329,10 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
         int begin = 0;
         int chukiStart = 0;
 
-        //外字が無ければそのまま返却
+        // 外字が無ければそのまま返却
         if (!m.find()) return line;
 
-        //変換後の文字列を出力するバッファ
+        // 変換後の文字列を出力するバッファ
         StringBuilder buf = new StringBuilder();
 
         do {
@@ -1333,10 +1341,10 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
 
             buf.append(line.substring(begin, chukiStart));
 
-            //外字はUTF-8に変換してそのまま継続
+            // 外字はUTF-8に変換してそのまま継続
             if (chuki.charAt(0) == '※') {
                 String chukiInner = chuki.substring(3, chuki.length()-1);
-                //U+のコードのみの注記
+                // U+のコードのみの注記
                 if (chukiInner.startsWith("U+") || chukiInner.startsWith("u+")) {
                     String gaiji = gaijiConverter.codeToCharString(chukiInner);
                     if (gaiji != null) {
@@ -1345,37 +1353,37 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                         continue;
                     }
                 }
-                //、の後ろにコードがある場合
+                // 、の後ろにコードがある場合
                 String[] chukiValues = chukiInner.split("、");
-                //注記文字グリフ or 代替文字変換
+                // 注記文字グリフ or 代替文字変換
                 String gaiji = gaijiConverter.toAlterString(chukiValues[0]);
-                //注記内なら注記タグは除外する
+                // 注記内なら注記タグは除外する
                 if (gaiji != null) {
                     if (hasInnerChuki(line, m.start())) {
                         gaiji = gaiji.replaceAll(chukiPattern.pattern(), "");
                     }
                 }
-                //コード変換
+                // コード変換
                 if (gaiji == null && chukiValues.length > 3) {
                     gaiji = gaijiConverter.codeToCharString(chukiValues[3]);
                 }
-                //コード変換
+                // コード変換
                 if (gaiji == null && chukiValues.length > 2) {
                     gaiji = gaijiConverter.codeToCharString(chukiValues[2]);
                 }
-                //コード変換
+                // コード変換
                 if (gaiji == null && chukiValues.length > 1) {
                     gaiji = gaijiConverter.codeToCharString(chukiValues[1]);
                 }
-                //注記名称で変換
+                // 注記名称で変換
                 if (gaiji == null) {
                     gaiji = gaijiConverter.toUtf(chukiValues[0]);
                 }
-                //外字注記変換をログに出力
+                // 外字注記変換をログに出力
                 if (gaiji != null) {
-                    //if (logged) logger.info(lineNum, "外字注記", chuki+" → U+"+Integer.toHexString(AozoraGaijiConverter.toUtfCode(gaiji)));
+                    // if (logged) logger.info(lineNum, "外字注記", chuki+" → U+"+Integer.toHexString(AozoraGaijiConverter.toUtfCode(gaiji)));
                     if (gaiji.length() == 1 && escape) {
-                        //特殊文字は 前に※をつけて文字出力時に例外処理
+                        // 特殊文字は 前に※をつけて文字出力時に例外処理
                         switch (gaiji.charAt(0)) {
                         case '※': buf.append('※'); break;
                         case '》': buf.append('※'); break;
@@ -1389,18 +1397,18 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                     continue;
                 }
 
-                //変換不可 画像指定付き外字なら画像注記に変更
+                // 変換不可 画像指定付き外字なら画像注記に変更
                 if (hasInnerChuki(line, m.start())) {
                     gaiji = "〓";
                     logger.warning(lineNum + " 外字注記内に注記があります " + chuki);
                 } else {
-                    //画像指定外字
+                    // 画像指定外字
                     int imageStartIdx = chuki.indexOf('（', 2);
                     if (imageStartIdx > -1 && chuki.indexOf('.', 2) != -1) {
-                        //※を消して内部処理用画像注記に変更 ［＃（ファイル名）#GAIJI#］
+                        // ※を消して内部処理用画像注記に変更 ［＃（ファイル名）#GAIJI#］
                         gaiji = chuki.substring(1, chuki.length()-1)+"#GAIJI#］";
                     } else {
-                        //画像以外
+                        // 画像以外
                         if (logged) logger.info(lineNum + " 外字未変換 " + chuki);
                         gaiji = "〓［＃行右小書き］（"+chukiValues[0]+"）［＃行右小書き終わり］";
                     }
@@ -1408,9 +1416,9 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                 buf.append(gaiji);
 
             } else if (chuki.charAt(0) == '〔') {
-                //拡張ラテン文字変換
+                // 拡張ラテン文字変換
                 String inner = chuki.substring(1, chuki.length()-1);
-                //〔の次が半角でなければ〔の中を再度外字変換
+                // 〔の次が半角でなければ〔の中を再度外字変換
                 if (!CharUtils.isHalfSpace(inner.toCharArray())) {
                     buf.append('〔').append(convertGaijiChuki(inner, true)).append('〕');
                 } else {
@@ -1418,7 +1426,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                     buf.append(latinConverter.toLatinString(inner));
                 }
             } else if (chuki.charAt(0) == '／') {
-                //くの字点
+                // くの字点
                 if (chuki.charAt(1) == '″') buf.append("〴");
                 else buf.append("〳");
                 buf.append("〵");
@@ -1427,7 +1435,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
             begin = chukiStart+chuki.length();
         } while (m.find());
 
-        //残りの文字をつなげて返却
+        // 残りの文字をつなげて返却
         return buf.toString()+line.substring(begin);
     }
 
@@ -1454,53 +1462,53 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
      * 前にルビがあって｜で始まる場合は｜の前に追加 */
     String replaceChukiSufTag(String line)
     {
-        //前方参照注記がなければそのまま返却
-        if (line.indexOf("［＃「") == -1) return line;
+        // 前方参照注記がなければそのまま返却
+        if (!line.contains("［＃「")) return line;
 
-        //注記内注記があれば除外
+        // 注記内注記があれば除外
         StringBuilder buf = new StringBuilder();
-        //最初の注記以後は文字判別で入れ子をチェック
+        // 最初の注記以後は文字判別で入れ子をチェック
         Matcher mTag = Pattern.compile("((［＃)|］)").matcher(line);
         int mTagEnd = 0;
         int innerTagLevel = 0;
         int innerTagStart = 0;
         while (mTag.find()) {
-            //注記前まで出力
+            // 注記前まで出力
             if (innerTagLevel <= 1) buf.append(line.substring(mTagEnd, mTag.start()));
             mTagEnd = mTag.end();
             String tag = mTag.group();
             if ("］".equals(tag)) {
-                //注記タグを出力
+                // 注記タグを出力
                 if (innerTagLevel <= 1) buf.append(tag);
                 else if (innerTagLevel == 2) logger.warning(lineNum + " 注記内に注記があります " + line.substring(innerTagStart, mTagEnd));
                 innerTagLevel--;
             } else {
                 innerTagLevel++;
-                //注記タグを出力
+                // 注記タグを出力
                 if (innerTagLevel <= 1) buf.append(tag);
                 else if (innerTagLevel == 2) innerTagStart = mTag.start();
             }
         }
-        //後ろを出力
+        // 後ろを出力
         buf.append(line.substring(mTagEnd));
         line = buf.toString();
 
-        //"［＃「([^］]+)」([^」|^］]+)］"
+        // "［＃「([^］]+)」([^」|^］]+)］"
         Matcher m = chukiSufPattern.matcher(line);
         if (!m.find()) return line;
 
         int chOffset = 0;
         buf = new StringBuilder(line);
         do {
-            //System.out.println(m.group());
+            // System.out.println(m.group());
             String target = m.group(1);
-            //target = target.replaceAll("《[^》]+》", "");
+            // target = target.replaceAll("《[^》]+》", "");
             String chuki = m.group(2);
             String[] tags = sufChukiMap.get(chuki);
             int chukiTagStart = m.start();
             int chukiTagEnd = m.end();
 
-            //後ろにルビがあったら前に移動して位置を調整
+            // 後ろにルビがあったら前に移動して位置を調整
             if (chukiTagEnd < line.length() && buf.charAt(chukiTagEnd+chOffset) == '《') {
                 int rubyEnd = buf.indexOf("》", chukiTagEnd+chOffset+2);
                 String ruby = buf.substring(chukiTagEnd+chOffset, rubyEnd+1);
@@ -1512,10 +1520,10 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
             }
 
             if (chuki.endsWith("の注記付き終わり")) {
-                //［＃注記付き］○○［＃「××」の注記付き終わり］の例外処理
+                // ［＃注記付き］○○［＃「××」の注記付き終わり］の例外処理
                 buf.delete(chukiTagStart+chOffset, chukiTagEnd+chOffset);
                 buf.insert(chukiTagStart+chOffset, "《"+target+"》");
-                //前にある［＃注記付き］を｜に置換
+                // 前にある［＃注記付き］を｜に置換
                 int start = buf.lastIndexOf("［＃注記付き］", chukiTagStart+chOffset);
                 if (start != -1) {
                     buf.delete(start+1, start+7);
@@ -1524,13 +1532,13 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                 }
                 chOffset += target.length()+2 - (chukiTagEnd-chukiTagStart);
             } else if (tags != null) {
-                //置換済みの文字列で注記追加位置を探す
+                // 置換済みの文字列で注記追加位置を探す
                 int targetStart = this.getTargetStart(buf, chukiTagStart, chOffset, CharUtils.removeRuby(target).length());
 
-                //後ろタグ置換
+                // 後ろタグ置換
                 buf.delete(chukiTagStart+chOffset, chukiTagEnd+chOffset);
                 buf.insert(chukiTagStart+chOffset, "［＃"+tags[1]+"］");
-                //前タグinsert
+                // 前タグinsert
                 buf.insert(targetStart, "［＃"+tags[0]+"］");
 
                 chOffset += tags[0].length() + tags[1].length() +6 - (chukiTagEnd-chukiTagStart);
@@ -1538,11 +1546,11 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
             }
         } while (m.find());
 
-        //注記タグ等を再度変換
+        // 注記タグ等を再度変換
         line = buf.toString();
-        //「」が2つある注記 「○○」に「××」の注記
+        // 「」が2つある注記 「○○」に「××」の注記
         m = chukiSufPattern2.matcher(line);
-        //マッチしなければそのまま返却
+        // マッチしなければそのまま返却
         if (!m.find()) return line;
         chOffset = 0;
         do {
@@ -1553,28 +1561,28 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
             int chukiTagStart = m.start();
             int chukiTagEnd = m.end();
 
-            //前方参照注記ではない
+            // 前方参照注記ではない
             if (tags == null) {
                 if (chuki.endsWith("のルビ") || (chukiRuby && chuki.endsWith("の注記"))) {
-                    //ルビに変換 ママは除外
+                    // ルビに変換 ママは除外
                     if (chuki.startsWith("に「") && !chuki.startsWith("に「ママ")) {
-                        //［＃「青空文庫」に「あおぞらぶんこ」のルビ］
+                        // ［＃「青空文庫」に「あおぞらぶんこ」のルビ］
                         int targetStart = this.getTargetStart(buf, chukiTagStart, chOffset, targetLength);
-                        //後ろタグ置換
+                        // 後ろタグ置換
                         buf.delete(chukiTagStart+chOffset, chukiTagEnd+chOffset);
                         String rt = chuki.substring(chuki.indexOf('「')+1, chuki.indexOf('」'));
                         buf.insert(chukiTagStart+chOffset, "《"+rt+"》");
-                        //前に ｜ insert
+                        // 前に ｜ insert
                         buf.insert(targetStart, "｜");
                         chOffset += rt.length()+3 - (chukiTagEnd-chukiTagStart);
-                    //} else if (target.indexOf("」の左に「") > -1) {
-                        //［＃「青空文庫」の左に「あおぞらぶんこ」のルビ］
-                        //左ルビ未対応 TODO 行左小書き？
+                    // } else if (target.indexOf("」の左に「") > -1) {
+                        // ［＃「青空文庫」の左に「あおぞらぶんこ」のルビ］
+                        // 左ルビ未対応 TODO 行左小書き？
                     }
                 } else if (chukiKogaki && chuki.endsWith("の注記")) {
-                    //後ろに小書き表示 ママは除外
+                    // 後ろに小書き表示 ママは除外
                     if (chuki.startsWith("に「") && !chuki.startsWith("に「ママ")) {
-                        //［＃「青空文庫」に「あおぞらぶんこ」の注記］
+                        // ［＃「青空文庫」に「あおぞらぶんこ」の注記］
                         buf.delete(chukiTagStart+chOffset, chukiTagEnd+chOffset);
                         String kogaki = "［＃小書き］"+chuki.substring(chuki.indexOf('「')+1, chuki.indexOf('」'))+"［＃小書き終わり］";
                         buf.insert(chukiTagStart+chOffset, kogaki);
@@ -1584,22 +1592,22 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
             }
         } while (m.find());
 
-        //置換後文字列を返却
+        // 置換後文字列を返却
         return buf.toString();
     }
     /** 前方参照注記の前タグ挿入位置を取得 */
     private int getTargetStart(StringBuilder buf, int chukiTagStart, int chOffset, int targetLength)
     {
-        //置換済みの文字列で注記追加位置を探す
+        // 置換済みの文字列で注記追加位置を探す
         int idx = chukiTagStart-1+chOffset;
         boolean hasRuby = false;
         int length = 0;
-        //間にあるルビと注記タグは除外 ※※※》等のエスケープをチェックする
+        // 間にあるルビと注記タグは除外 ※※※》等のエスケープをチェックする
         while (targetLength > length && idx >= 0) {
             switch (buf.charAt(idx)) {
             case '》':
                 idx--;
-                //エスケープ文字
+                // エスケープ文字
                 if (CharUtils.isEscapedChar(buf, idx)) {
                     length++;
                     break;
@@ -1611,7 +1619,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                 break;
             case '］':
                 idx--;
-                //エスケープ文字
+                // エスケープ文字
                 if (CharUtils.isEscapedChar(buf, idx)) {
                     length++;
                     break;
@@ -1621,7 +1629,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                 }
                 break;
             case '｜':
-                //エスケープ文字
+                // エスケープ文字
                 if (CharUtils.isEscapedChar(buf, idx)) {
                     length++;
                 }
@@ -1631,9 +1639,9 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
             }
             idx--;
         }
-        //ルビがあれば先頭の｜を含める
+        // ルビがあれば先頭の｜を含める
         if (hasRuby && idx >= 0 && buf.charAt(idx) == '｜') return idx;
-        //一つ戻す
+        // 一つ戻す
         return idx + 1;
     }
 
@@ -1653,12 +1661,12 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
             String lowerChukiTag = chukiTag.toLowerCase();
             chukiStart = m.start();
 
-            //fontの入れ子は可、圏点・縦横中はルビも付加
-            //なぜか【＃マッチするので除外
+            // fontの入れ子は可、圏点・縦横中はルビも付加
+            // なぜか【＃マッチするので除外
             if (chukiTag.charAt(0) == '＃') {
                 continue;
             }
-            //<img </img> <a </a> 以外のタグは注記処理せず本文処理
+            // <img </img> <a </a> 以外のタグは注記処理せず本文処理
             if (chukiTag.charAt(0) == '<' &&
                 !(lowerChukiTag.startsWith("<img ") || lowerChukiTag.startsWith("</img>") || lowerChukiTag.startsWith("<a ") || lowerChukiTag.startsWith("</a>"))) {
                 continue;
@@ -1666,34 +1674,34 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
 
             String chukiName = chukiTag.substring(2, chukiTag.length()-1);
 
-            //注記の前まで本文出力
+            // 注記の前まで本文出力
             if (charStart < chukiStart) {
                 this.convertEscapedText(buf, ch, charStart, chukiStart);
             }
 
-            //訓点・返り点と縦書き時の縦中横
+            // 訓点・返り点と縦書き時の縦中横
             if (chukiKunten.contains(chukiName) || (this.vertical && chukiName.startsWith("縦中横"))) {
-                //注記変換
+                // 注記変換
                 buf.append(chukiMap.get(chukiName)[0]);
             } else {
-                //外字画像
+                // 外字画像
                 int imageStartIdx = chukiTag.lastIndexOf('（');
                 if (imageStartIdx > -1) {
-                    //訓点送り仮名チェック ＃の次が（で.を含まない
+                    // 訓点送り仮名チェック ＃の次が（で.を含まない
                     if (imageStartIdx == 2 && chukiTag.endsWith("）］") && chukiTag.indexOf('.', 2) == -1) {
                         buf.append(chukiMap.get("行右小書き")[0]);
                         buf.append(chukiTag.substring(3, chukiTag.length()-2));
                         buf.append(chukiMap.get("行右小書き終わり")[0]);
                     } else if (chukiTag.indexOf('.', 2) == -1) {
-                        //拡張子を含まない
+                        // 拡張子を含まない
 
                     } else {
-                        //画像ファイル名置換処理実行
+                        // 画像ファイル名置換処理実行
                         String srcFilePath = this.getImageChukiFileName(chukiTag, imageStartIdx);
                          int orient = this.writer.getImageOrientation( srcFilePath);
                         if (srcFilePath != null) {
-                            //外字の場合 (注記末尾がフラグ文字列になっている)
-                             //外字の場合 (注記末尾がフラグ文字列になっている)
+                            // 外字の場合 (注記末尾がフラグ文字列になっている)
+                             // 外字の場合 (注記末尾がフラグ文字列になっている)
                             if (chukiTag.endsWith("#GAIJI#］")) {
                             String fileName = writer.getImageFilePath(srcFilePath.trim(), -1);
                             switch(orient){
@@ -1711,10 +1719,10 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                     }
                 }
             }
-            //注記の後ろを文字開始位置に設定
+            // 注記の後ろを文字開始位置に設定
             charStart = chukiStart+chukiTag.length();
         }
-        //注記の後ろの残りの文字
+        // 注記の後ろの残りの文字
         if (charStart < ch.length) {
             this.convertEscapedText(buf, ch, charStart, ch.length);
         }
@@ -1730,10 +1738,10 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
     {
         StringBuilder buf = new StringBuilder();
 
-        //外字変換後に前方参照注記変換
+        // 外字変換後に前方参照注記変換
         line = this.replaceChukiSufTag(this.convertGaijiChuki(line, true));
 
-        //キャプション指定の画像の場合はすぐにキャプションでなければ画像タグを閉じる
+        // キャプション指定の画像の場合はすぐにキャプションでなければ画像タグを閉じる
         if (this.nextLineIsCaption) {
             if (!line.startsWith("［＃キャプション］") && !line.startsWith("［＃ここからキャプション］")) {
                 logger.warning(lineNum + " 画像の次の行にキャプションがありません");
@@ -1748,13 +1756,13 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
         char[] ch = line.toCharArray();
         int charStart = 0;
 
-        //行頭半角スペース除去
+        // 行頭半角スペース除去
         /*if (this.removeHeadSpace && line.length() > begin+1) {
             switch (line.charAt(begin)) {
             case ' ': case ' ': begin++;
             }
         }*/
-        //行頭インデント 先頭が「『―（以外 半角空白は除去
+        // 行頭インデント 先頭が「『―（以外 半角空白は除去
         if (this.forceIndent && ch.length > charStart+1) {
             switch (ch[charStart]) {
             case '　': case '「': case '『':  case '（': case '”': case '〈': case '【': case '〔': case '［': case '※':
@@ -1768,22 +1776,22 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
             }
         }
 
-        //割仲介し文字位置
+        // 割仲介し文字位置
         int wrcStart = 0;
-        //割り注の改行挿入位置
+        // 割り注の改行挿入位置
         int wrcBrPos = -1;
-        //〔〕or（）を外に出す場合に開始文字が設定されている
+        // 〔〕or（）を外に出す場合に開始文字が設定されている
         char wrcStartChar = 0;
 
-        //窓見出し内 行頭のみ
+        // 窓見出し内 行頭のみ
         boolean inMado = false;
-        //行内地付き
-        //boolean inlineBtm = false;
-        //行の後でfloatのクリア
-        //boolean clearRight = false;
-        //boolean clearLeft = false;
+        // 行内地付き
+        // boolean inlineBtm = false;
+        // 行の後でfloatのクリア
+        // boolean clearRight = false;
+        // boolean clearLeft = false;
 
-        //aタグが出力されたらtrue
+        // aタグが出力されたらtrue
         boolean linkStarted = false;
 
         StringBuilder bufSuf = new StringBuilder();
@@ -1793,7 +1801,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
 
         this.noTcyStart.clear();
         this.noTcyEnd.clear();
-        //横組み中なら先頭から縦中横抑止
+        // 横組み中なら先頭から縦中横抑止
         if (inYoko) this.noTcyStart.add(0);
 
         while (m.find()) {
@@ -1801,18 +1809,18 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
             String lowerChukiTag = chukiTag.toLowerCase();
             chukiStart = m.start();
 
-            //fontの入れ子は可、圏点・縦横中はルビも付加
-            //なぜか【＃マッチするので除外
+            // fontの入れ子は可、圏点・縦横中はルビも付加
+            // なぜか【＃マッチするので除外
             if (chukiTag.charAt(0) == '＃') {
                 continue;
             }
-            //<img </img> <a </a> 以外のタグは注記処理せず本文処理
+            // <img </img> <a </a> 以外のタグは注記処理せず本文処理
             if (chukiTag.charAt(0) == '<' &&
                 !(lowerChukiTag.startsWith("<img ") || lowerChukiTag.equals("</img>") || lowerChukiTag.startsWith("<a ") || lowerChukiTag.equals("</a>"))) {
                 continue;
             }
 
-            //注記→タグ変換
+            // 注記→タグ変換
             String chukiName = chukiTag.substring(2, chukiTag.length()-1);
             String[] tags = chukiMap.get(chukiName);
 
@@ -1824,7 +1832,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                     wrcEndChar = ch[chukiStart-1];
                 }
 
-                //割り注の改行指定があったら改行を挿入
+                // 割り注の改行指定があったら改行を挿入
                 if (charStart <= wrcBrPos && wrcBrPos <= chukiStart) {
                     this.convertEscapedText(buf, ch, charStart, wrcBrPos);
                     buf.append(chukiMap.get("改行")[0]);
@@ -1834,25 +1842,25 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                     this.convertEscapedText(buf, ch, charStart, chukiStart-(wrcEndChar==0?0:1));
                 }
 
-                //割り注終わりタグ出力
+                // 割り注終わりタグ出力
                 buf.append(tags[0]);
                 if (wrcEndChar != 0) buf.append(wrcEndChar);
-                //長さ警告
+                // 長さ警告
                 if (wrcStart != -1 && chukiStart - wrcStart > 60) logger.warning(lineNum + " 割り注が長すぎます");
-                //割り注終了
+                // 割り注終了
                 wrcStart = -1;
                 wrcStartChar = 0;
                 wrcBrPos = -1;
 
-                //continueするのでループの後処理
-                //注記の後ろを文字開始位置に設定
+                // continueするのでループの後処理
+                // 注記の後ろを文字開始位置に設定
                 charStart = chukiStart+chukiTag.length();
                 continue;
             }
 
-            //注記の前まで本文出力
+            // 注記の前まで本文出力
             if (charStart < chukiStart) {
-                //割り注の改行指定があったら改行を挿入
+                // 割り注の改行指定があったら改行を挿入
                 if (charStart <= wrcBrPos && wrcBrPos <= chukiStart) {
                     this.convertEscapedText(buf, ch, charStart, wrcBrPos);
                     buf.append(chukiMap.get("改行")[0]);
@@ -1863,11 +1871,11 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                 }
             }
 
-            //縦中横抑止
-            //横組みチェック
+            // 縦中横抑止
+            // 横組みチェック
             if (chukiName.endsWith("横組み")) { inYoko = true; noTcyStart.add(buf.length()); }
             else if (inYoko && chukiName.endsWith("横組み終わり")) { inYoko = false; noTcyEnd.add(buf.length()); }
-            //縦中横チェック
+            // 縦中横チェック
             if (!inYoko) {
                 if (chukiName.startsWith("縦中横")) {
                     if (chukiName.endsWith("終わり")) { noTcyEnd.add(buf.length()); }
@@ -1876,42 +1884,42 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
             }
 
             if (tags != null) {
-                //タグを出力しないフラグ 字下げや窓見出しエラー用
+                // タグを出力しないフラグ 字下げや窓見出しエラー用
                 boolean noTagAppend = false;
 
-                ////////////////////////////////////////////////////////////////
-                //改ページ注記
-                ////////////////////////////////////////////////////////////////
+                // /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// //
+                // 改ページ注記
+                // /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// //
                 if (chukiFlagPageBreak.contains(chukiName) && !bookInfo.isNoPageBreakLine(lineNum)) {
-                    //字下げ状態エラー出力
+                    // 字下げ状態エラー出力
                     if (inJisage >= 0) {
                         logger.warning(inJisage + " 字下げ注記省略");
                         buf.append(chukiMap.get("字下げ省略")[0]);
                         inJisage = -1;
                     }
 
-                    //改ページの前に文字があれば出力
+                    // 改ページの前に文字があれば出力
                     if (buf.length() > 0) {
                         printLineBuffer(out, this.convertRubyText(buf.toString()), lineNum, true);
-                        //bufはクリア
+                        // bufはクリア
                         buf.setLength(0);
                     }
 
                     noBr = true;
-                    //改ページの後ろに文字があれば</br>は出力
+                    // 改ページの後ろに文字があれば</br>は出力
                     if (ch.length > charStart+chukiTag.length()) noBr = false;
 
-                    //改ページフラグ設定
+                    // 改ページフラグ設定
                     if (chukiFlagMiddle.contains(chukiName)) {
-                        //左右中央
+                        // 左右中央
                         this.setPageBreakTrigger(pageBreakMiddle);
                     } else if (chukiFlagBottom.contains(chukiName)) {
-                        //ページ左
+                        // ページ左
                         this.setPageBreakTrigger(pageBreakBottom);
                     } else if (bookInfo.isImageSectionLine(lineNum+1)) {
-                        //次の行が画像単ページの表紙
+                        // 次の行が画像単ページの表紙
                         if (writer.getImageIndex() == bookInfo.coverImageIndex && bookInfo.insertCoverPage) {
-                            //先頭画像で表紙に移動なら改ページしない
+                            // 先頭画像で表紙に移動なら改ページしない
                             this.setPageBreakTrigger(null);
                         } else {
                             this.setPageBreakTrigger(pageBreakImageAuto);
@@ -1922,16 +1930,16 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                         this.setPageBreakTrigger(pageBreakNormal);
                     }
                 }
-                ////////////////////////////////////////////////////////////////
+                // /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// //
 
-                //字下げフラグ処理
+                // 字下げフラグ処理
                 else if (chukiName.endsWith("字下げ")) {
                     if (inJisage >= 0) {
                         logger.warning(inJisage + " 字下げ注記省略");
                         buf.append(chukiMap.get("字下げ省略")[0]);
                         inJisage = -1;
                     }
-                    //タグが閉じていればインラインなのでフラグは立てない
+                    // タグが閉じていればインラインなのでフラグは立てない
                     if (tags.length > 1) inJisage = -1; // インライン
                     else inJisage = lineNum; // ブロック開始
                 }
@@ -1942,20 +1950,20 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                     }
                     inJisage = -1;
                 }
-                //窓見出しは行頭のみ
+                // 窓見出しは行頭のみ
                 else if (chukiName.startsWith("窓")) {
-                    //注記以外の文字があるかチェック
+                    // 注記以外の文字があるかチェック
                     if (!inMado && line.substring(0, chukiStart).replaceAll("［＃[^］]+］", "").replaceAll("^( |　)*$", "").length() > 0) {
                         logger.warning(lineNum + " 行頭のみ対応: "+chukiName);
                         noTagAppend = true;
                     } else {
                         if (inMado && chukiName.endsWith("終わり")) {
                             inMado = false;
-                            //clearLeft = true;
+                            // clearLeft = true;
                         } else inMado = true;
                     }
                 }
-                //行内地付き Kobo調整中
+                // 行内地付き Kobo調整中
                 /*else if (buf.length() > 0 && chukiName.startsWith("地付き")) {
                     if (inlineBtm && (chukiName.endsWith("終わり") || chukiName.endsWith("終り"))) {
                         inlineBtm = false;
@@ -1968,9 +1976,9 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                         tags = chukiMap.get(chukiName);
                     }
                 }*/
-                //割り注開始時
+                // 割り注開始時
                 else if (chukiName.endsWith("割り注")) {
-                    //割り注終わりの位置を取得
+                    // 割り注終わりの位置を取得
                     wrcStart = chukiStart+chukiTag.length();
                     wrcStartChar = 0;
                     wrcBrPos = -1;
@@ -1981,18 +1989,18 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                         logger.severe(lineNum + " 割り注終わりなし");
                         wrcStart = -1;
                     } else {
-                        //前後の 〔or（ があるかチェック 割り注注記の前もチェック
+                        // 前後の 〔or（ があるかチェック 割り注注記の前もチェック
                         if (chukiStart == 0 || ch[chukiStart-1] != '〔' && ch[chukiStart-1] != '（' ) {
                             if ((ch[wrcStart] == '〔' && line.indexOf('〕', wrcStart) == wrcEnd-1) || (ch[wrcStart] == '（' && line.indexOf('）', wrcStart) == wrcEnd-1)) {
                                 wrcStartChar = ch[wrcStart];
-                                //１文字出力して注記の位置を1文字後ろにずらす
+                                // １文字出力して注記の位置を1文字後ろにずらす
                                 buf.append(ch[wrcStart]);
                                 chukiStart++;
                             }
                         }
 
-                        //改行がなければ追加位置を指定 半角文字は0.5で加算
-                        //割り注内の他の注記を除いた文字数を取得 末尾が。かもチェック
+                        // 改行がなければ追加位置を指定 半角文字は0.5で加算
+                        // 割り注内の他の注記を除いた文字数を取得 末尾が。かもチェック
                         int start = wrcStart+(wrcStartChar==0?0:1);
                         int end = wrcEnd-(wrcStartChar==0?0:1);
                         if (ch[end] == '。') end--;
@@ -2043,7 +2051,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                                     else blength+=2;
                                 }
                             }
-                            //改行位置を取得 、。は禁則処理する
+                            // 改行位置を取得 、。は禁則処理する
                             if (wrcBrPos > 0 && wrcBrPos < ch.length &&
                                 ch[wrcBrPos] == '、' || ch[wrcBrPos] == '。') wrcBrPos++;
                         }
@@ -2057,41 +2065,41 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                         noBr = true;
                     }
                 }
-                //タグ出力
+                // タグ出力
                 if (!noTagAppend) {
                     buf.append(tags[0]);
-                    //行末で閉じる指定のタグをバッファに追加
+                    // 行末で閉じる指定のタグをバッファに追加
                     if (tags.length > 1) {
                         bufSuf.insert(0, tags[1]);
                     }
                 }
-                //ブロック注記の改行無しチェック
+                // ブロック注記の改行無しチェック
                 if (chukiFlagNoBr.contains(chukiName)) noBr = true;
 
             } else {
-                //画像 (訓点 ［＃（ス）］ は . があるかで判断)
+                // 画像 (訓点 ［＃（ス）］ は . があるかで判断)
                 // ［＃表紙（表紙.jpg）］［＃（表紙.jpg）］［＃「キャプション」のキャプション付きの図（表紙.jpg、横321×縦123）入る）］
                 //
                 int imageStartIdx = chukiTag.lastIndexOf('（');
                 if (imageStartIdx > -1) {
-                    //訓点送り仮名チェック ＃の次が（で.を含まない
+                    // 訓点送り仮名チェック ＃の次が（で.を含まない
                     if (imageStartIdx == 2 && chukiTag.endsWith("）］") && chukiTag.indexOf('.', 2) == -1) {
                         buf.append(chukiMap.get("行右小書き")[0]);
                         buf.append(chukiTag.substring(3, chukiTag.length()-2));
                         buf.append(chukiMap.get("行右小書き終わり")[0]);
                     } else if (chukiTag.indexOf('.', 2) == -1) {
-                        //拡張子を含まない
+                        // 拡張子を含まない
                         logger.info(lineNum + " 注記未変換 " + chukiTag);
                     } else {
-                        //ダミー出力時は画像注記は無視
+                        // ダミー出力時は画像注記は無視
                         if (!noImage) {
-                            //画像ファイル名置換処理実行
+                            // 画像ファイル名置換処理実行
                             String srcFilePath = this.getImageChukiFileName(chukiTag, imageStartIdx);
                             if (srcFilePath == null) {
                                 logger.severe(lineNum + " 注記エラー " + chukiTag);
                             } else {
                                 srcFilePath = srcFilePath.trim();
-                                //外字のすぐ後ろがルビならルビ開始文字をチェックしてなければ外字の前に｜をつける(1文字のみ対応)
+                                // 外字のすぐ後ろがルビならルビ開始文字をチェックしてなければ外字の前に｜をつける(1文字のみ対応)
                                 if (ch.length-1 > chukiStart+chukiTag.length() && ch[chukiStart+chukiTag.length()] == '《') {
                                     boolean hasRubyStart = false;
                                     for (int i=chukiStart-1; i>=0; i--) {
@@ -2103,16 +2111,16 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                                         buf.append('｜');
                                     }
                                 }
-                                //外字の場合 (注記末尾がフラグ文字列になっている)
+                                // 外字の場合 (注記末尾がフラグ文字列になっている)
                                 if (chukiTag.endsWith("#GAIJI#］")) {
-                                    //String ext = srcFilePath.substring(srcFilePath.lastIndexOf('.')+1).toLowerCase();
-                                    //ttf.ttc.otfなら外字フォント
-                                    //if ("ttf".equals(ext) || "ttc".equals(ext) || "otf".equals(ext)) {
-                                        //外字ファイルを出力対象に登録して連番を取得
-                                        //String className = writer.addGaijiFontFile(srcFilePath);
-                                        //buf.append("<span class=\"glyph ").append(className).append("\">").append('〓').append("</span>");
-                                        //logger.info(lineNum, "外字フォント利用", srcFilePath);
-                                    //} else {
+                                    // String ext = srcFilePath.substring(srcFilePath.lastIndexOf('.')+1).toLowerCase();
+                                    // ttf.ttc.otfなら外字フォント
+                                    // if ("ttf".equals(ext) || "ttc".equals(ext) || "otf".equals(ext)) {
+                                        // 外字ファイルを出力対象に登録して連番を取得
+                                        // String className = writer.addGaijiFontFile(srcFilePath);
+                                        // buf.append("<span class=\"glyph ").append(className).append("\">").append('〓').append("</span>");
+                                        // logger.info(lineNum, "外字フォント利用", srcFilePath);
+                                    // } else {
                                      int orient = this.writer.getImageOrientation( srcFilePath);
                                         String imgFileName = writer.getImageFilePath(srcFilePath.trim(), lineNum);
                                         if (imgFileName != null) {
@@ -2126,10 +2134,10 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                                               case 2:
                                             buf.append(String.format(chukiMap.get("縦長外字画像")[0], imgFileName));
                                             }
-                                            //ログ出力
+                                            // ログ出力
                                             logger.info(lineNum + " 外字画像利用 " + srcFilePath);
                                         }
-                                    //}
+                                    // }
                                 } else {
                                     if (noIllust && !writer.isCoverImage()) {
                                         logger.info(lineNum + "挿絵除外" + chukiTag);
@@ -2137,7 +2145,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                                         String dstFileName = writer.getImageFilePath(srcFilePath, lineNum);
                                         if (dstFileName != null) { // 先頭に移動してここで出力しない場合はnull
                                             if (bookInfo.isImageSectionLine(lineNum)) noBr = true;
-                                            //画像注記またはページ出力
+                                            // 画像注記またはページ出力
                                             if (printImageChuki(out, buf, srcFilePath, dstFileName, this.hasImageCaption(chukiTag), lineNum)) noBr = true;
                                         }
                                     }
@@ -2149,18 +2157,18 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                     if (noIllust && !writer.isCoverImage()) {
                         logger.info(lineNum + " 挿絵除外 " + chukiTag);
                     } else {
-                        //ダミー出力時は画像注記は無視
+                        // ダミー出力時は画像注記は無視
                         if (!noImage) {
-                            //src=の値抽出
+                            // src=の値抽出
                             String srcFilePath = this.getTagAttr(chukiTag, "src");
                             if (srcFilePath == null) {
                                 logger.severe(lineNum + " 画像注記エラー " + chukiTag);
                             } else {
-                                //単ページ画像の場合は<p>タグを出さない
+                                // 単ページ画像の場合は<p>タグを出さない
                                 String dstFileName = writer.getImageFilePath(srcFilePath.trim(), lineNum);
                                 if (dstFileName != null) { // 先頭に移動してここで出力しない場合はnull
                                     if (bookInfo.isImageSectionLine(lineNum)) noBr = true;
-                                    //画像注記またはページ出力
+                                    // 画像注記またはページ出力
                                     if (printImageChuki(out, buf, srcFilePath, dstFileName, this.hasImageCaption(chukiTag), lineNum)) noBr = true;
                                 }
                             }
@@ -2185,11 +2193,11 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                 }
 
                 else {
-                    //インデント字下げ
+                    // インデント字下げ
                     boolean patternMatched = false;
                     Matcher m2 = chukiPatternMap.get("折り返し").matcher(chukiTag);
                     if (m2.find()) {
-                        //字下げフラグ処理
+                        // 字下げフラグ処理
                         if (inJisage >= 0) {
                             logger.warning(inJisage + " 字下げ注記省略");
                             buf.append(chukiMap.get("字下げ省略")[0]);
@@ -2198,18 +2206,18 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
 
                         int arg0 = Integer.parseInt(CharUtils.fullToHalf(m2.group(1)));
                         int arg1 = Integer.parseInt(CharUtils.fullToHalf(m2.group(2)));
-                        buf.append(chukiMap.get("折り返し1")[0]+arg1);
-                        buf.append(chukiMap.get("折り返し2")[0]+(arg0-arg1));
+                        buf.append(chukiMap.get("折り返し1")[0]).append(arg1);
+                        buf.append(chukiMap.get("折り返し2")[0]).append(arg0 - arg1);
                         buf.append(chukiMap.get("折り返し3")[0]);
 
                         noBr = true; // ブロック字下げなので改行なし
                         patternMatched = true;
                     }
-                    //インデント字下げ
+                    // インデント字下げ
                     if (!patternMatched) {
                         m2 = chukiPatternMap.get("字下げ字詰め").matcher(chukiTag);
                         if (m2.find()) {
-                            //字下げフラグ処理
+                            // 字下げフラグ処理
                             if (inJisage >= 0) {
                                 logger.warning(inJisage + " 字下げ注記省略");
                                 buf.append(chukiMap.get("字下げ省略")[0]);
@@ -2218,19 +2226,19 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
 
                             int arg0 = Integer.parseInt(CharUtils.fullToHalf(m2.group(1)));
                             int arg1 = Integer.parseInt(CharUtils.fullToHalf(m2.group(2)));
-                            buf.append(chukiMap.get("字下げ字詰め1")[0]+arg0);
-                            buf.append(chukiMap.get("字下げ字詰め2")[0]+arg1);
+                            buf.append(chukiMap.get("字下げ字詰め1")[0]).append(arg0);
+                            buf.append(chukiMap.get("字下げ字詰め2")[0]).append(arg1);
                             buf.append(chukiMap.get("字下げ字詰め3")[0]);
 
                             noBr = true; // ブロック字下げなので改行なし
                             patternMatched = true;
                         }
                     }
-                    //字下げ複合は字下げの後の複合注記をclassに追加
+                    // 字下げ複合は字下げの後の複合注記をclassに追加
                     if (!patternMatched) {
                         m2 = chukiPatternMap.get("字下げ複合").matcher(chukiTag);
                         if (m2.find()) {
-                            //字下げフラグ処理
+                            // 字下げフラグ処理
                             if (inJisage >= 0) {
                                 logger.warning(inJisage + " 字下げ注記省略");
                                 buf.append(chukiMap.get("字下げ省略")[0]);
@@ -2239,21 +2247,21 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
 
                             int arg0 = Integer.parseInt(CharUtils.fullToHalf(m2.group(1)));
                             buf.append(chukiMap.get("字下げ複合1")[0]+arg0);
-                            //複合注記クラス追加
+                            // 複合注記クラス追加
                             if (chukiTag.indexOf("破線罫囲み") > 0) buf.append(" ").append(chukiMap.get("字下げ破線罫囲み")[0]);
                             else if (chukiTag.indexOf("罫囲み") > 0) buf.append(" ").append(chukiMap.get("字下げ罫囲み")[0]);
                             if (chukiTag.indexOf("破線枠囲み") > 0) buf.append(" ").append(chukiMap.get("字下げ破線枠囲み")[0]);
                             else if (chukiTag.indexOf("枠囲み") > 0) buf.append(" ").append(chukiMap.get("字下げ枠囲み")[0]);
                             if (chukiTag.indexOf("中央揃え") > 0) buf.append(" ").append(chukiMap.get("字下げ中央揃え")[0]);
                             if (chukiTag.indexOf("横書き") > 0) buf.append(" ").append(chukiMap.get("字下げ横書き")[0]);
-                            //複合字下げclass閉じる
+                            // 複合字下げclass閉じる
                             buf.append(chukiMap.get("字下げ複合2")[0]);
 
                             noBr = true; // ブロック字下げなので改行なし
                             patternMatched = true;
                         }
                     }
-                    //字下げ終わり複合注記
+                    // 字下げ終わり複合注記
                     if (!patternMatched) {
                         m2 = chukiPatternMap.get("字下げ終わり複合").matcher(chukiTag);
                         if (m2.find()) {
@@ -2266,27 +2274,27 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                         }
                     }
 
-                    //注記未変換
+                    // 注記未変換
                     if (!patternMatched) {
-                        if (chukiTag.indexOf("底本では") == -1 && chukiTag.indexOf("に「ママ」") == -1 && chukiTag.indexOf("」はママ") == -1)
+                        if (!chukiTag.contains("底本では") && !chukiTag.contains("に「ママ」") && !chukiTag.contains("」はママ"))
                             logger.info(lineNum + " 注記未変換 " + chukiTag);
                     }
                 }
             }
-            //注記の後ろを文字開始位置に設定
+            // 注記の後ろを文字開始位置に設定
             charStart = chukiStart+chukiTag.length();
         }
-        //注記の後ろの残りの文字
+        // 注記の後ろの残りの文字
         if (charStart < ch.length) {
             this.convertEscapedText(buf, ch, charStart, ch.length);
         }
-        //行末タグを追加
+        // 行末タグを追加
         if (bufSuf.length() > 0) buf.append(bufSuf.toString());
 
-        //底本：で前が改ページでなければ改ページ追加
+        // 底本：で前が改ページでなければ改ページ追加
         if (separateColophon) {
             if (this.sectionCharLength > 0 && buf.length() > 2 && buf.charAt(0)=='底' && buf.charAt(1)=='本' && buf.charAt(2)=='：' ) {
-                //字下げ状態エラー出力
+                // 字下げ状態エラー出力
                 if (inJisage >= 0) {
                     logger.severe(inJisage + " 字下げ注記エラー");
                 } else {
@@ -2295,10 +2303,10 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
             }
         }
 
-        //ルビ変換＋自動縦中横してからバッファを出力
+        // ルビ変換＋自動縦中横してからバッファを出力
         this.printLineBuffer(out, this.convertRubyText(buf.toString()), lineNum, noBr||this.inImageTag);
 
-        //クリア Kobo 調整中
+        // クリア Kobo 調整中
         /*if (clearRight && clearLeft) out.append(chukiMap.get("クリア")[0]);
         else if (clearRight) out.append(chukiMap.get("右クリア")[0]);
         else if (clearLeft) out.append(chukiMap.get("左クリア")[0]);*/
@@ -2308,10 +2316,10 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
      * @return 単ページ出力ならtrue */
     private boolean printImageChuki(BufferedWriter out, StringBuilder buf, String srcFileName, String dstFileName, boolean hasCaption, int lineNum) throws IOException
     {
-        //サイズを取得して画面サイズとの%を指定
+        // サイズを取得して画面サイズとの%を指定
         int imagePageType = this.writer.getImagePageType(srcFileName, this.tagLevel, lineNum, hasCaption);
 
-        //サイズを%で指定 倍率指定が無効または画像が小さいなら0
+        // サイズを%で指定 倍率指定が無効または画像が小さいなら0
         double ratio = this.writer.getImageWidthRatio(srcFileName, hasCaption);
 
         if (imagePageType == PageBreakType.IMAGE_INLINE_W) {
@@ -2334,7 +2342,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
             else buf.append(String.format(chukiMap.get("画像幅下")[0], ratio, dstFileName));
         } else if (imagePageType != PageBreakType.IMAGE_PAGE_NONE) {
             if (ratio != -1 && this.imageFloatPage) {
-                //単ページfloat表示
+                // 単ページfloat表示
                 if (imagePageType == PageBreakType.IMAGE_PAGE_W) {
                     buf.append(String.format(chukiMap.get("画像単横浮")[0], dstFileName));
                 } else if (imagePageType == PageBreakType.IMAGE_PAGE_H) {
@@ -2344,27 +2352,27 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                     else buf.append(String.format(chukiMap.get("画像単幅浮")[0], ratio, dstFileName));
                 }
             } else {
-                //単ページ出力 タグの外のみ
-                //改ページの前に文字があれば前のページに出力
+                // 単ページ出力 タグの外のみ
+                // 改ページの前に文字があれば前のページに出力
                 if (buf.length() > 0) this.printLineBuffer(out, buf, lineNum, true);
                 buf.append(String.format(chukiMap.get("画像")[0], dstFileName));
                 buf.append(chukiMap.get("画像終わり")[0]);
-                //単ページ出力
+                // 単ページ出力
                 this.printImagePage(out, buf, lineNum, srcFileName, dstFileName, imagePageType);
                 return true;
             }
         } else {
             if (ratio != -1 && imageFloatBlock) {
-                //画像float表示
+                // 画像float表示
                 if (ratio <= 0) buf.append(String.format(chukiMap.get("画像浮")[0], dstFileName));
                 else buf.append(String.format(chukiMap.get("画像幅浮")[0], ratio, dstFileName));
             } else {
-                //画像通常表示
+                // 画像通常表示
                 if (ratio <= 0) buf.append(String.format(chukiMap.get("画像")[0], dstFileName));
                 else buf.append(String.format(chukiMap.get("画像幅")[0], ratio, dstFileName));
             }
         }
-        //キャプショがある場合はタグを閉じない
+        // キャプショがある場合はタグを閉じない
         if (hasCaption) {
             this.inImageTag = true;
             this.nextLineIsCaption = true;
@@ -2379,7 +2387,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
      * ルビ変換前に呼び出す */
     private void convertEscapedText(StringBuilder buf, char[] ch, int begin, int end) throws IOException
     {
-        //先頭にあるIVSは除去
+        // 先頭にあるIVSは除去
         switch (ch[begin]) {
         case 0xDB40:
             begin+=2;
@@ -2392,7 +2400,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
             break;
         }
 
-        //事前に《,》の代替文字をエスケープ済※《,※》 に変換
+        // 事前に《,》の代替文字をエスケープ済※《,※》 に変換
         for (int i=begin+1; i<end; i++) {
             switch (ch[i]) {
             case '<':
@@ -2415,12 +2423,12 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                     ch[i-1] = '※'; ch[i] = '》';
                 }
                 break;
-            //濁点半濁点の結合文字は通常の文字に変換 半角は横書きの場合があるのでそのまま
+            // 濁点半濁点の結合文字は通常の文字に変換 半角は横書きの場合があるのでそのまま
             case '゙': ch[i] = '゛'; break;
             case '゚': ch[i] = '゜'; break;
             }
         }
-        //NULLは除去
+        // NULLは除去
         for (int idx=begin; idx<end; idx++) {
             switch (ch[idx]) {
             case '\0':
@@ -2438,8 +2446,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
      * 特殊文字は※が前についているので※｜※《※》はルビ処理しない
      * ・ルビ （前｜漢字《かんじ》 → 前<ruby>漢字<rt>かんじ</rt></ruby>）
      * ・</ruby><ruby> と連続する場合はタグを除去
-     * @param buf 出力先バッファ
-     * @param ch ルビ変換前の行文字列 */
+     * @param line ルビ変換前の行文字列 */
     StringBuilder convertRubyText(String line) throws IOException
     {
         StringBuilder buf = new StringBuilder();
@@ -2453,7 +2460,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
         int rubyStart = -1;// ルビ開始位置
         int rubyTopStart = -1;// ぶりがな開始位置
         boolean inRuby = false;
-        //boolean isAlphaRuby = false; // 英字へのルビ
+        // boolean isAlphaRuby = false; // 英字へのルビ
         RubyCharType rubyCharType = RubyCharType.NULL;
 
         String rubyStartChuki = chukiMap.get("ルビ開始")[0];
@@ -2462,22 +2469,22 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
         boolean noTcy = false;
         for (int i=begin; i<end; i++) {
 
-            //縦中横と横書きの中かチェック
+            // 縦中横と横書きの中かチェック
             if (!noTcy && noTcyStart.contains(i)) noTcy = true;
             else if (noTcy && noTcyEnd.contains(i)) noTcy = false;
 
             switch (ch[i]) {
             case '｜':
-                //エスケープ文字なら処理しない
+                // エスケープ文字なら処理しない
                 if (!CharUtils.isEscapedChar(ch, i)) {
-                    //前まで出力
+                    // 前まで出力
                     if (rubyStart != -1) convertTcyText(buf, ch, rubyStart, i, noTcy);
                     rubyStart = i + 1;
                     inRuby = true;
                 }
                 break;
             case '《':
-                //エスケープ文字なら処理しない
+                // エスケープ文字なら処理しない
                 if (!CharUtils.isEscapedChar(ch, i)) {
                     inRuby = true;
                     rubyTopStart = i;
@@ -2493,13 +2500,13 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                         if (noRuby)
                             convertTcyText(buf, ch, rubyStart, rubyTopStart, noTcy); // 本文
                         else {
-                            //長すぎるルビを警告
+                            // 長すぎるルビを警告
                             if (rubyTopStart-rubyStart >= 30) {
-                                //タグは除去 面倒なので文字列で置換
+                                // タグは除去 面倒なので文字列で置換
                                 if (line.substring(rubyStart, rubyTopStart).replaceAll("<[^>]+>", " ").length() >= 30)
                                     logger.warning(lineNum + " ルビが長すぎます");
                             }
-                            //同じ長さで同じ文字なら一文字づつルビを振る
+                            // 同じ長さで同じ文字なら一文字づつルビを振る
                             if (rubyTopStart-rubyStart == i-rubyTopStart-1 && CharUtils.isSameChars(ch, rubyTopStart+1, i)) {
                                 if (buf.indexOf(rubyEndChuki, buf.length()-rubyEndChuki.length()) == -1) {
                                     buf.append(rubyStartChuki);
@@ -2535,7 +2542,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                     rubyTopStart = -1;
                 }
             } else {
-                //ルビ開始位置チェック
+                // ルビ開始位置チェック
                 if (rubyStart != -1) {
                     // ルビ開始チェック中で漢字以外または英字以外ならキャンセルして出力
                     boolean charTypeChanged = false;
@@ -2553,22 +2560,22 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                         rubyStart = -1; rubyCharType = RubyCharType.NULL;
                     }
                 }
-                //ルビが終了したか開始されていない
+                // ルビが終了したか開始されていない
                 if (rubyStart == -1) {
                     // ルビ中でなく漢字
                     if (CharUtils.isKanji(ch, i)) {
                         rubyStart = i; rubyCharType = RubyCharType.KANJI;
                     } else if (CharUtils.isHiragana(ch[i])) {
-                        //全角英数字
+                        // 全角英数字
                         rubyStart = i; rubyCharType = RubyCharType.HIRAGANA;
                     } else if (CharUtils.isKatakana(ch[i])) {
-                        //全角英数字
+                        // 全角英数字
                         rubyStart = i; rubyCharType = RubyCharType.KATAKANA;
                     } else if (CharUtils.isHalfSpace(ch[i]) && ch[i]!='>') {
-                        //英数字または空白
+                        // 英数字または空白
                         rubyStart = i; rubyCharType = RubyCharType.ALPHA;
                     } else if (CharUtils.isFullAlpha(ch[i]) || CharUtils.isFullNum(ch[i])) {
-                        //全角英数字
+                        // 全角英数字
                         rubyStart = i; rubyCharType = RubyCharType.FULLALPHA;
                     }
                     // ルビ中でなく漢字、半角以外は出力 数字と!?は英字扱いになっている
@@ -2611,20 +2618,20 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
         for (int i=begin; i<end; i++) {
 
             String gaijiFileName = null;
-            //4バイト文字
+            // 4バイト文字
             if (i<end-1 && Character.isHighSurrogate(ch[i])) {
-                //文字コード
+                // 文字コード
                 int code = Character.toCodePoint(ch[i], ch[i+1]);
-                //TODO 非対応文字チェック
+                // TODO 非対応文字チェック
 
-                //4バイト文字＋IVS(U+E0100～)
+                // 4バイト文字＋IVS(U+E0100～)
                 if (i<end-3 && ch[i+2] == 0xDB40) {
                     String ivsCode = Integer.toHexString(Character.toCodePoint(ch[i+2], ch[i+3]));
                     if (ivs32FontMap != null) {
                         String className = "u"+Integer.toHexString(code)+"-u"+ivsCode;
                         gaijiFileName = ivs32FontMap.get(className);
                         if (gaijiFileName != null) {
-                            //フォントファイルを出力対象に追加して外字タグ出力
+                            // フォントファイルを出力対象に追加して外字タグ出力
                             if (this.printGlyphFontTag(buf, gaijiFileName, className, '〓')) {
                                 logger.info(lineNum + "外字フォント利用(IVS含む) "+ch[i]+ch[i+1]+ch[i+2]+ch[i+3]+"("+gaijiFileName+")");
                                 i+=3; // IVSの次へ
@@ -2633,7 +2640,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                         }
                     }
                     if (utf32FontMap != null) {
-                        //1文字フォントの後ろにIVSがあるかチェック
+                        // 1文字フォントの後ろにIVSがあるかチェック
                         gaijiFileName = utf32FontMap.get(code);
                         if (gaijiFileName != null) {
                             if (this.printGlyphFontTag(buf, gaijiFileName, "u"+Integer.toHexString(code), '〓')) {
@@ -2643,9 +2650,9 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                             }
                         }
                     }
-                    //4バイト文字とIVSを出力
+                    // 4バイト文字とIVSを出力
                     /*if (!gaiji32) {
-                        //4バイト文字を出力しない
+                        // 4バイト文字を出力しない
                         buf.append("〓");
                         i+=3; // IVSの次へ
                         logger.info(lineNum, "4バイト文字とIVSを除外", "-"+ch[i]+ch[i+1]+"("+Integer.toHexString(code)+"+"+ivsCode+")");
@@ -2669,13 +2676,13 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                     i+=3; // IVSの次へ
                     continue;
                 }
-                //4バイト文字＋IVS(U+FE00～)
+                // 4バイト文字＋IVS(U+FE00～)
                 if (i<end-2 && ch[i+2] >= 0xFE00 && ch[i+2] <= 0xFE0F) {
                     if (ivs32FontMap != null) {
                         String className = "u"+Integer.toHexString(code)+"-u"+Integer.toHexString(ch[i+2]);
                         gaijiFileName = ivs32FontMap.get(className);
                         if (gaijiFileName != null) {
-                            //フォントファイルを出力対象に追加して外字タグ出力
+                            // フォントファイルを出力対象に追加して外字タグ出力
                             if (this.printGlyphFontTag(buf, gaijiFileName, className, '〓')) {
                                 logger.info(lineNum + " 外字フォント利用(IVS含む) " + ch[i]+ch[i+1]+ch[i+2]+"("+gaijiFileName+")");
                                 i+=2; // IVSの次へ
@@ -2683,9 +2690,9 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                             }
                         }
                     }
-                    //4バイト文字とIVSを出力
+                    // 4バイト文字とIVSを出力
                     /*if (!gaiji32) {
-                        //4バイト文字を出力しない
+                        // 4バイト文字を出力しない
                         buf.append("〓");
                         i+=2; // IVSの次へ
                         logger.info(lineNum, "4バイト文字とIVSを除外", "-"+ch[i]+ch[i+1]+"("+Integer.toHexString(code)+"+"+(Integer.toHexString(ch[i+2]))+")");
@@ -2706,7 +2713,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                     i+=2; // IVSの次へ
                     continue;
                 }
-                //IVSなし１文字フォントあり
+                // IVSなし１文字フォントあり
                 if (utf32FontMap != null) {
                     gaijiFileName = utf32FontMap.get(code);
                     if (gaijiFileName != null) {
@@ -2717,9 +2724,9 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                         }
                     }
                 }
-                //通常の4バイト文字
+                // 通常の4バイト文字
                 /*if (!gaiji32) {
-                    //4バイト文字を出力しない
+                    // 4バイト文字を出力しない
                     buf.append("〓");
                 } else {*/
                     buf.append(ch[i]);
@@ -2731,10 +2738,10 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
 
             }
 
-            //2バイト文字 U+FFFF以下
-            //TODO 非対応文字チェック
+            // 2バイト文字 U+FFFF以下
+            // TODO 非対応文字チェック
 
-            //2バイト文字＋IVS(U+E0100～)
+            // 2バイト文字＋IVS(U+E0100～)
             if (i<end-2 && ch[i+1] == 0xDB40) {
                 String ivsCode = Integer.toHexString(Character.toCodePoint(ch[i+1], ch[i+2]));
                 if (ivs16FontMap != null) {
@@ -2758,7 +2765,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                         }
                     }
                 }
-                //2バイト文字とIVSを出力
+                // 2バイト文字とIVSを出力
                 if (printIvsSSP) {
                     if (this.vertical) buf.append(chukiMap.get("正立")[0]);
                     buf.append(ch[i]);
@@ -2775,7 +2782,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                 i+=2; // IVSの次へ
                 continue;
             }
-            //2バイト文字＋IVS(U+FE00～)
+            // 2バイト文字＋IVS(U+FE00～)
             if (i<end-1 && ch[i+1] >= 0xFE00 && ch[i+1] <= 0xFE0F) {
                 if (ivs32FontMap != null) {
                     String className = "u"+Integer.toHexString(ch[i])+"-u"+Integer.toHexString(ch[i+1]);
@@ -2788,7 +2795,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                         }
                     }
                 }
-                //IVS無しの1文字フォント
+                // IVS無しの1文字フォント
                 if (utf16FontMap != null && utf16FontMap.containsKey((int)ch[i])) {
                     gaijiFileName = utf16FontMap.get((int)ch[i]);
                     if (gaijiFileName != null) {
@@ -2800,7 +2807,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                     }
                 }
 
-                //2バイト文字とIVSを出力
+                // 2バイト文字とIVSを出力
                 if (printIvsBMP) {
                     buf.append(ch[i]);
                     buf.append(ch[i+1]);
@@ -2813,29 +2820,29 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                 continue;
             }
 
-            //IVS無しの1文字フォント
+            // IVS無しの1文字フォント
             if (utf16FontMap != null && utf16FontMap.containsKey((int)ch[i])) {
-                //通常文字の外字指定 ほぼすべての文字が対象になるので先にcontainsKeyで判定
+                // 通常文字の外字指定 ほぼすべての文字が対象になるので先にcontainsKeyで判定
                 gaijiFileName = utf16FontMap.get((int)ch[i]);
                 if (gaijiFileName != null) {
                     if (this.printGlyphFontTag(buf, gaijiFileName, "u"+Integer.toHexString((int)ch[i]), '〓')) {
                         logger.info(lineNum + " 外字フォント利用 "+ch[i]+"("+gaijiFileName+")");
-                        //次の文字へ
+                        // 次の文字へ
                         continue;
                     }
                 }
             }
 
-            //1文字フォントもIVSもない場合
-            //自動縦中横処理
+            // 1文字フォントもIVSもない場合
+            // 自動縦中横処理
             if (this.vertical && !(inYoko || noTcy)) {
                 switch (ch[i]) {
                 case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
-                    //数字2文字を縦横中で出力
+                    // 数字2文字を縦横中で出力
                     if (this.autoYoko) {
                         if (this.autoYokoNum3 && i+2<ch.length && CharUtils.isNum(ch[i+1]) && CharUtils.isNum(ch[i+2])) {
-                            //数字3文字
-                            //前後が半角かチェック
+                            // 数字3文字
+                            // 前後が半角かチェック
                             if (!this.checkTcyPrev(ch, i-1)) break;
                             if (!this.checkTcyNext(ch, i+3)) break;
                             buf.append(chukiMap.get("縦中横")[0]);
@@ -2846,8 +2853,8 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                             i+=2;
                             continue;
                         } else if (i+1<ch.length && CharUtils.isNum(ch[i+1])) {
-                            //数字2文字
-                            //前後が半角かチェック
+                            // 数字2文字
+                            // 前後が半角かチェック
                             if (!this.checkTcyPrev(ch, i-1)) break;
                             if (!this.checkTcyNext(ch, i+2)) break;
                             buf.append(chukiMap.get("縦中横")[0]);
@@ -2857,8 +2864,8 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                             i++;
                             continue;
                         } else if (this.autoYokoNum1 && (i==0 || !CharUtils.isNum(ch[i-1])) && (i+1==ch.length || !CharUtils.isNum(ch[i+1]))) {
-                            //数字1文字
-                            //前後が半角かチェック
+                            // 数字1文字
+                            // 前後が半角かチェック
                             if (!this.checkTcyPrev(ch, i-1)) break;
                             if (!this.checkTcyNext(ch, i+1)) break;
                             buf.append(chukiMap.get("縦中横")[0]);
@@ -2866,25 +2873,25 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                             buf.append(chukiMap.get("縦中横終わり")[0]);
                             continue;
                         }
-                        //begin～end外もチェックする
-                        //1月1日のような場合
+                        // begin～end外もチェックする
+                        // 1月1日のような場合
                         if (i+3<ch.length && ch[i+1]=='月' && '0'<=ch[i+2] && ch[i+2]<='9' && (
                             ch[i+3]=='日' || (i+4<ch.length && '0'<=ch[i+3] && ch[i+3]<='9' && ch[i+4]=='日'))) {
-                            //1月2日 1月10日 の1を縦中横
+                            // 1月2日 1月10日 の1を縦中横
                             buf.append(chukiMap.get("縦中横")[0]);
                             buf.append(ch[i]);
                             buf.append(chukiMap.get("縦中横終わり")[0]);
                             continue;
                         }
                         if (i>1 && i+1<ch.length && (ch[i-1]=='年' && ch[i+1]=='月' || ch[i-1]=='月' && ch[i+1]=='日' || ch[i-1]=='第' && (ch[i+1]=='刷' || ch[i+1]=='版' || ch[i+1]=='巻'))) {
-                            //年3月 + 月4日 + 第5刷 + 第6版 + 第7巻 の数字１文字縦中横
+                            // 年3月 + 月4日 + 第5刷 + 第6版 + 第7巻 の数字１文字縦中横
                             buf.append(chukiMap.get("縦中横")[0]);
                             buf.append(ch[i]);
                             buf.append(chukiMap.get("縦中横終わり")[0]);
                             continue;
                         }
                         if (i>2 && (ch[i-2]=='明'&&ch[i-1]=='治' || ch[i-2]=='大'&&ch[i-1]=='正' || ch[i-2]=='昭'&&ch[i-1]=='和' || ch[i-2]=='平'&&ch[i-1]=='成')) {
-                            //月5日 の5を縦中横
+                            // 月5日 の5を縦中横
                             buf.append(chukiMap.get("縦中横")[0]);
                             buf.append(ch[i]);
                             buf.append(chukiMap.get("縦中横終わり")[0]);
@@ -2895,8 +2902,8 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                 case '!': case '?':
                     if (autoYoko) {
                         if (autoYokoEQ3 && i+2<ch.length && (ch[i+1]=='!' || ch[i+1]=='?') && (ch[i+2]=='!' || ch[i+2]=='?')) {
-                            //!? 3文字を縦中横で出力
-                            //前後が半角かチェック
+                            // !? 3文字を縦中横で出力
+                            // 前後が半角かチェック
                             if (!this.checkTcyPrev(ch, i-1)) break;
                             if (!this.checkTcyNext(ch, i+3)) break;
                             buf.append(chukiMap.get("縦中横")[0]);
@@ -2907,8 +2914,8 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                             i+=2;
                             continue;
                         } else if (i+1<ch.length && (ch[i+1]=='!' || ch[i+1]=='?')) {
-                            //!? 2文字を縦横中で出力
-                            //前後が半角かチェック
+                            // !? 2文字を縦横中で出力
+                            // 前後が半角かチェック
                             if (!this.checkTcyPrev(ch, i-1)) break;
                             if (!this.checkTcyNext(ch, i+2)) break;
                             buf.append(chukiMap.get("縦中横")[0]);
@@ -2918,8 +2925,8 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                             i++;
                             continue;
                         } else if (autoYokoEQ1 && (i==0 || !CharUtils.isNum(ch[i-1])) && (i+1==ch.length || !CharUtils.isNum(ch[i+1]))) {
-                            //!? 1文字
-                            //前後が半角かチェック
+                            // !? 1文字
+                            // 前後が半角かチェック
                             if (!this.checkTcyPrev(ch, i-1)) break;
                             if (!this.checkTcyNext(ch, i+1)) break;
                             buf.append(chukiMap.get("縦中横")[0]);
@@ -2933,10 +2940,10 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
             }
 
             if (this.vertical) {
-                //ひらがな/カタカナ＋濁点/半濁点 結合文字も対応
+                // ひらがな/カタカナ＋濁点/半濁点 結合文字も対応
                 if (i+1<ch.length && (ch[i+1]=='゛' || ch[i+1]=='゜')) {
                     if (CharUtils.isHiragana(ch[i]) || CharUtils.isKatakana(ch[i]) || ch[i]=='〻') {
-                        //通常の濁点文字ならその文字で出力
+                        // 通常の濁点文字ならその文字で出力
                         if (ch[i+1]=='゛') {
                             if ('ッ' != ch[i] && ('か' <= ch[i] && ch[i] <= 'と' || 'カ' <= ch[i] && ch[i] <= 'ト')) {
                                 ch[i] = (char)((int)ch[i]+1);
@@ -2958,7 +2965,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                             continue;
                         }
                         if (this.dakutenType == 1 && !(inYoko || noTcy)) {
-                            //濁点をspanで重ねて表示 ルビ内無効
+                            // 濁点をspanで重ねて表示 ルビ内無効
                             buf.append("<span class=\"dakuten\">");
                             buf.append(ch[i]);
                             buf.append("<span>");
@@ -2968,11 +2975,11 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                             i++;
                             continue;
                         } else if (this.dakutenType == 2) {
-                            //1文字フォントで出力
+                            // 1文字フォントで出力
                             String className = "u"+Integer.toHexString(ch[i]);
                             if (ch[i+1]=='゛') className += "-u3099";
                             else className += "-u309a";
-                            //if (this.printGlyphFontTag(buf, "dakuten/"+className+".ttf", className, '〓')) {
+                            // if (this.printGlyphFontTag(buf, "dakuten/"+className+".ttf", className, '〓')) {
                             if (this.printGlyphFontTag(buf, "dakuten/"+className+".ttf", className, ch[i])) {
                                 logger.info(lineNum + " 濁点フォント利用 "+ch[i]+ch[i+1]);
                                 i++;
@@ -2982,12 +2989,12 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                     }
                 }
 
-                //英字縦中横
-                //if (autoAlpha2 ) {
+                // 英字縦中横
+                // if (autoAlpha2 ) {
                 //
-                //}
+                // }
             }
-            //自動縦中横で出力していたらcontinueしていてここは実行されない
+            // 自動縦中横で出力していたらcontinueしていてここは実行されない
             convertReplacedChar(buf, ch, i, noTcy);
         }
     }
@@ -3039,15 +3046,15 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
      * < と > と & は &lt; &gt; &amp; に置換 */
     private void convertReplacedChar(StringBuilder buf, char[] ch, int idx, boolean noTcy) throws IOException
     {
-        //NULL文字なら何も出力しない
+        // NULL文字なら何も出力しない
         if (ch[idx] == '\0') return;
 
-        //String str = latinConverter.toLatinGlyphString(ch);
-        //if (str != null) out.write(str);
-        //else out.write(ch);
+        // String str = latinConverter.toLatinGlyphString(ch);
+        // if (str != null) out.write(str);
+        // else out.write(ch);
         int length = buf.length();
 
-        //エスケープ文字を変換
+        // エスケープ文字を変換
         boolean escaped = false;
         if (idx > 0) {
         switch (ch[idx]) {
@@ -3065,17 +3072,17 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
 
         if (replaceMap != null) {
             String replaced = replaceMap.get(ch[idx]);
-            //置換して終了
+            // 置換して終了
             if (replaced != null) {
                 buf.append(replaced);
                 return;
             }
         }
-        //エスケープ文字なら2文字前を見る
+        // エスケープ文字なら2文字前を見る
         if (idx > 1 || (idx == 1 && !escaped)) {
             if (replace2Map != null) {
                 String replaced = replace2Map.get(""+ch[idx-(escaped?2:1)]+ch[idx]);
-                //置換して終了
+                // 置換して終了
                 if (replaced != null) {
                     buf.setLength(length-1); // 1文字削除
                     buf.append(replaced);
@@ -3083,14 +3090,14 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                 }
             }
         }
-        //エスケープ文字を出力
+        // エスケープ文字を出力
         if (escaped) {
             buf.append(ch[idx]);
             ch[idx] = '　'; // ※※の場合の対策
             return;
         }
 
-        //文字の間の全角スペースを禁則調整
+        // 文字の間の全角スペースを禁則調整
         if (!(inYoko || noTcy)) {
             switch (this.spaceHyphenation) {
             case 1:
@@ -3115,21 +3122,21 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
             }
         }
 
-        //横組み内は処理しない
+        // 横組み内は処理しない
         if (this.vertical && !inYoko) {
             switch (ch[idx]) {
             case '≪': buf.append("《"); break;
             case '≫': buf.append("》"); break;
             case '“': buf.append("〝"); break;
             case '”': buf.append("〟"); break;
-            //case '〝': ch[i] = '“'; break;
-            //case '〟': ch[i] = '”'; break;
+            // case '〝': ch[i] = '“'; break;
+            // case '〟': ch[i] = '”'; break;
             case '―': buf.append("─"); break; // コード違いのダッシュ
-            //ローマ数字等 Readerは修正されたけど一応残す
-            //正立しない文字: ¶⇔⇒≡√∇∂∃∠⊥⌒∽∝∫∬∮∑∟⊿≠≦≧∈∋⊆⊇⊂⊃∧∨↑↓→←∀
-            //正立フラグで調整
+            // ローマ数字等 Readerは修正されたけど一応残す
+            // 正立しない文字: ¶⇔⇒≡√∇∂∃∠⊥⌒∽∝∫∬∮∑∟⊿≠≦≧∈∋⊆⊇⊂⊃∧∨↑↓→←∀
+            // 正立フラグで調整
             case '÷': case '±': case '∞': case '∴': case '∵':
-            //正立する文字 Reader最新ファームでは修正された
+            // 正立する文字 Reader最新ファームでは修正された
             case 'Ⅰ': case 'Ⅱ': case 'Ⅲ': case 'Ⅳ': case 'Ⅴ': case 'Ⅵ': case 'Ⅶ': case 'Ⅷ': case 'Ⅸ': case 'Ⅹ': case 'Ⅺ': case 'Ⅻ':
             case 'ⅰ': case 'ⅱ': case 'ⅲ': case 'ⅳ': case 'ⅴ': case 'ⅵ': case 'ⅶ': case 'ⅷ': case 'ⅸ': case 'ⅹ': case 'ⅺ': case 'ⅻ':
             case '⓪': case '①': case '②': case '③': case '④': case '⑤': case '⑥': case '⑦': case '⑧': case '⑨': case '⑩':
@@ -3147,7 +3154,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
             case '☹': case '☺': case '☻':
             case '✓': case '✔': case '␣': case '⏎': case '♩': case '♮': case '♫': case '♬': case 'ℓ': case '№': case '℡':
             case 'ℵ': case 'ℏ': case '℧':
-                //縦中横の中でなければタグで括る
+                // 縦中横の中でなければタグで括る
                 if (!noTcy) {
                     buf.append(chukiMap.get("正立")[0]);
                     buf.append(ch[idx]);
@@ -3168,16 +3175,16 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
         }
     }
 
-    ////////////////////////////////////////////////////////////////
+    // /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// //
     // 画像単一ページチェック
     /** 前後に改ページを入れて画像を出力
      * @throws IOException */
     private void printImagePage(BufferedWriter out, StringBuilder buf, int lineNum, String srcFileName, String dstFileName, int imagePageType) throws IOException
     {
-        //画像の前に改ページがある場合
+        // 画像の前に改ページがある場合
         boolean hasPageBreakTriger = this.pageBreakTrigger != null && !this.pageBreakTrigger.noChapter;
 
-        //画像単ページとしてセクション出力
+        // 画像単ページとしてセクション出力
         switch (imagePageType) {
         case PageBreakType.IMAGE_PAGE_W:
             this.setPageBreakTrigger(pageBreakImageW);
@@ -3205,7 +3212,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
         else this.setPageBreakTrigger(pageBreakNoChapter);
     }
 
-    ////////////////////////////////////////////////////////////////
+    // /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// //
     // 出力処理
     /** 本文があれば改ページするフラグ */
     PageBreakType pageBreakTrigger = null;
@@ -3220,10 +3227,10 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
     /** 改ページ用のトリガを設定
      * 設定済みだが連続行で書かれていたり空行除外で改行されていない場合は上書きされて無視される
      * @param trigger 改ページトリガ nullなら改ページ設定キャンセル
-     * @param 改ページの後ろに文字がある場合に改行を出すならfalse */
+     * 改ページの後ろに文字がある場合に改行を出すならfalse */
     void setPageBreakTrigger(PageBreakType trigger)
     {
-        //改ページ前の空行は無視
+        // 改ページ前の空行は無視
         this.printEmptyLines = 0;
         this.pageBreakTrigger = trigger;
         if (this.pageBreakTrigger != null && this.pageBreakTrigger.pageType != PageBreakType.PAGE_NORMAL) this.skipMiddleEmpty = true;
@@ -3234,39 +3241,38 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
      * @param out 出力先
      * @param buf 出力する行
      * @param noBr pタグで括れない次以降の行で閉じるブロック注記がある場合
-     * @param chapterLevel Chapterレベル 指定無し=0, 大見出し=1, 中見出し=2, 見出し=2, 小見出し=3 (パターン抽出時は設定に合わせるか目次リストで選択したレベル)
      * @throws IOException */
     private void printLineBuffer(BufferedWriter out, StringBuilder buf, int lineNum, boolean noBr) throws IOException
     {
         String line = buf.toString();
         int length = buf.length();
-        //すべて空白は空行にする
+        // すべて空白は空行にする
         if (CharUtils.isSpace(line)) { line = ""; length = 0; }
 
         int idIdx = 1;
         String chapterId = null;
 
         ChapterLineInfo chapterLineInfo = null;
-        //空白除去の時はスペースのみの行は空行扱い
+        // 空白除去の時はスペースのみの行は空行扱い
         if (this.removeEmptyLine > 0 && length > 0 && CharUtils.isSpace(line)) {
             line = "";
             length = 0;
         }
         if (length == 0) {
-            //空行なら行数をカウント 左右中央の時の本文前の空行は無視
+            // 空行なら行数をカウント 左右中央の時の本文前の空行は無視
             if (!this.skipMiddleEmpty && !noBr) {
                 this.printEmptyLines++;
             }
-            //バッファクリア
+            // バッファクリア
             buf.setLength(0);
             return;
         }
 
-        //バッファ内の文字列出力
-        //見出し階層レベル
+        // バッファ内の文字列出力
+        // 見出し階層レベル
         chapterLineInfo = this.bookInfo.getChapterLineInfo(lineNum);
 
-        //タグの階層をチェック (強制改ページ判別用に先にやっておく)
+        // タグの階層をチェック (強制改ページ判別用に先にやっておく)
         int tagStart = 0;
         int tagEnd = 0;
         boolean inTag = false;
@@ -3285,41 +3291,41 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
 
         if (out != null) {
 
-        //強制改ページ処理
-        //改ページトリガが設定されていない＆タグの外
+        // 強制改ページ処理
+        // 改ページトリガが設定されていない＆タグの外
         if (this.forcePageBreak && this.pageBreakTrigger == null && this.tagLevel == 0) {
-            //行単位で強制改ページ
+            // 行単位で強制改ページ
             if (this.pageByteSize > this.forcePageBreakSize) {
                 this.setPageBreakTrigger(pageBreakNoChapter);
             } else {
                 if (forcePageBreakEmptyLine > 0 && this.printEmptyLines >= forcePageBreakEmptyLine && this.pageByteSize > this.forcePageBreakEmptySize) {
-                    //空行での分割
+                    // 空行での分割
                     this.setPageBreakTrigger(pageBreakNoChapter);
                 } else if (forcePageBreakChapterLevel > 0 && this.pageByteSize > this.forcePageBreakChapterSize) {
-                    //章での分割 次の行が見出しで次の行がタグの中になる場合１行前で改ページ
+                    // 章での分割 次の行が見出しで次の行がタグの中になる場合１行前で改ページ
                     if (chapterLineInfo != null) this.setPageBreakTrigger(pageBreakNoChapter);
                     else if (tagStart-tagEnd > 0 && this.bookInfo.getChapterLevel(lineNum+1) > 0) this.setPageBreakTrigger(pageBreakNoChapter);
                 }
             }
         }
 
-        //改ページフラグが設定されていて、空行で無い場合
+        // 改ページフラグが設定されていて、空行で無い場合
         if (this.pageBreakTrigger != null) {
-            //空ページでの改ページ
-            //if (sectionCharLength == 0) {
+            // 空ページでの改ページ
+            // if (sectionCharLength == 0) {
             //    out.write(chukiMap.get("改行")[0]);
-            //}
+            // }
 
-            //改ページ処理
+            // 改ページ処理
             if (this.pageBreakTrigger.pageType != PageBreakType.PAGE_NORMAL) {
-                //左右中央
+                // 左右中央
                 this.writer.nextSection(out, lineNum, this.pageBreakTrigger.pageType, PageBreakType.IMAGE_PAGE_NONE, null);
             } else {
-                //その他
+                // その他
                 this.writer.nextSection(out, lineNum, PageBreakType.PAGE_NORMAL, this.pageBreakTrigger.imagePageType, this.pageBreakTrigger.srcFileName);
             }
 
-            //ページ情報初期化
+            // ページ情報初期化
             this.pageByteSize = 0;
             this.sectionCharLength = 0;
             if (tagLevel > 0) logger.severe(lineNum +  " タグが閉じていません");
@@ -3330,11 +3336,11 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
         }
 
         this.skipMiddleEmpty = false;
-        //空行は行数がカウントされているので文字出力前に出力
+        // 空行は行数がカウントされているので文字出力前に出力
         if (this.printEmptyLines > 0) {
             String br = chukiMap.get("改行")[0];
             int lines = Math.min(this.maxEmptyLine, this.printEmptyLines-this.removeEmptyLine);
-            //見出し後3行以内開始の空行は1行は残す
+            // 見出し後3行以内開始の空行は1行は残す
             if (lastChapterLine >= lineNum-this.printEmptyLines-2) {
                 lines = Math.max(1, lines);
             }
@@ -3349,21 +3355,21 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
 
         this.lineIdNum++;
         if (noBr) {
-            //見出し用のID設定
+            // 見出し用のID設定
             if (chapterLineInfo != null) {
                 chapterId = "kobo."+this.lineIdNum+"."+(idIdx++);
                 if (line.startsWith("<")) {
-                    //タグがあるのでIDを設定
+                    // タグがあるのでIDを設定
                     line = line.replaceFirst("(<[\\d|\\w]+)", "$1 id=\""+chapterId+"\"");
                 } else {
-                    //タグでなければ一文字目をspanに入れる
+                    // タグでなければ一文字目をspanに入れる
                     out.write("<span id=\""+chapterId+"\">"+line.charAt(0)+"</span>");
                     this.pageByteSize += (chapterId.length() + 20);
                     line = line.substring(1);
                 }
             }
         } else {
-            //改行用のp出力 見出しなら強制ID出力 koboの栞用IDに利用可能なkobo.のIDで出力
+            // 改行用のp出力 見出しなら強制ID出力 koboの栞用IDに利用可能なkobo.のIDで出力
             if (this.withMarkId || (chapterLineInfo != null && !chapterLineInfo.pageBreakChapter)) {
                 chapterId = "kobo."+this.lineIdNum+"."+(idIdx++);
                 out.write("<p id=\""+chapterId+"\">");
@@ -3375,19 +3381,19 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
             }
         }
         out.write(line);
-        //ページバイト数加算
-        if (this.forcePageBreak) this.pageByteSize += line.getBytes("UTF-8").length;
+        // ページバイト数加算
+        if (this.forcePageBreak) this.pageByteSize += line.getBytes(StandardCharsets.UTF_8).length;
 
-        //改行のpを閉じる
+        // 改行のpを閉じる
         if (!noBr) {
             out.write("</p>\n");
         }
 
-        //見出しのChapterをWriterに追加 同じ行で数回呼ばれるので初回のみ
+        // 見出しのChapterをWriterに追加 同じ行で数回呼ばれるので初回のみ
         if (chapterLineInfo != null && lastChapterLine != lineNum) {
             String name = chapterLineInfo.getChapterName();
             if (name != null && name.length() > 0) {
-                //自動抽出で+10されているのは1桁のレベルに戻す
+                // 自動抽出で+10されているのは1桁のレベルに戻す
                 if (chapterLineInfo.pageBreakChapter) this.writer.addChapter(null, name, chapterLineInfo.level%10);
                 else this.writer.addChapter(chapterId, name, chapterLineInfo.level%10);
                 lastChapterLine = lineNum;
@@ -3398,10 +3404,10 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
 
         }
 
-        //タグの階層を変更
+        // タグの階層を変更
         this.tagLevel += tagStart-tagEnd;
 
-        //バッファクリア
+        // バッファクリア
         buf.setLength(0);
     }
 }

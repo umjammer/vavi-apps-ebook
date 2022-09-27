@@ -1,34 +1,29 @@
 package com.github.hmdev.converter;
 
+import java.nio.charset.Charset;
+
+
 /** 第3水準 第4水準JISをUTF-8に変換するためのクラス
  * nioは1面の対応のみなので使わない
  */
 public class JisConverter
 {
     /** 0面 */
-    final char[] men0;
+    static  final char[] men0;
     /** 1面 1-13区*/
-    final String[][] men1_13;
+    static final String[][] men1_13;
     /** 1面 */
-    final int[][] men1;
+    static final int[][] men1;
     /** 2面 */
-    final int[][] men2;
+    static final int[][] men2;
 
-    static JisConverter converter;
+    private JisConverter() {}
 
-    /** sigletonで利用時に生成 */
-    static public JisConverter getConverter()
-    {
-        if (converter == null) converter = new JisConverter();
-        return converter;
-    }
-
-    private JisConverter()
-    {
-        //初期化バイト数に限界があったので分割
+    static {
+        // 初期化バイト数に限界があったので分割
         men0 = new char[]
             {' ','!','"','#','$','%','&','\'','(',')','*','+',',','-','.','/','0','1','2','3','4','5','6','7','8','9',':',';','<','=','>','?','@','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','{','\\','}','^','_','`','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','{','|','}','~'};
-        /** 13列まではString配列で設定 */
+        // 13列まではString配列で設定
         men1_13 = new String[][]{
             null,
             {null,"　","、","。","，","．","・","：","；","？","！","゛","゜","´","｀","¨","＾","￣","＿","ヽ","ヾ","ゝ","ゞ","〃","仝","々","〆","〇","ー","―","‐","／","＼","〜","‖","｜","…","‥","‘","’","“","”","（","）","〔","〕","［","］","｛","｝","〈","〉","《","》","「","」","『","』","【","】","＋","－","±","×","÷","＝","≠","＜","＞","≦","≧","∞","∴","♂","♀","°","′","″","℃","￥","＄","¢","£","％","＃","＆","＊","＠","§","☆","★","○","●","◎","◇"},
@@ -49,7 +44,7 @@ public class JisConverter
         men2 = init2();
     }
 
-    private int[][] init1()
+    private static int[][] init1()
     {
         return new int[][]{
             null, null, null, null, null, null, null, null, null, null, null, null, null, null, /* 0-13 */
@@ -137,7 +132,7 @@ public class JisConverter
         };
     }
 
-    private int[][] init2()
+    private static int[][] init2()
     {
         int[][] arr = new int[95][];
         arr[1] =new int[]{0,0x20089,0x4e02,0x4e0f,0x4e12,0x4e29,0x4e2b,0x4e2e,0x4e40,0x4e47,0x4e48,0x200a2,0x4e51,0x3406,0x200a4,0x4e5a,0x4e69,0x4e9d,0x342c,0x342e,0x4eb9,0x4ebb,0x201a2,0x4ebc,0x4ec3,0x4ec8,0x4ed0,0x4eeb,0x4eda,0x4ef1,0x4ef5,0x4f00,0x4f16,0x4f64,0x4f37,0x4f3e,0x4f54,0x4f58,0x20213,0x4f77,0x4f78,0x4f7a,0x4f7d,0x4f82,0x4f85,0x4f92,0x4f9a,0x4fe6,0x4fb2,0x4fbe,0x4fc5,0x4fcb,0x4fcf,0x4fd2,0x346a,0x4ff2,0x5000,0x5010,0x5013,0x501c,0x501e,0x5022,0x3468,0x5042,0x5046,0x504e,0x5053,0x5057,0x5063,0x5066,0x506a,0x5070,0x50a3,0x5088,0x5092,0x5093,0x5095,0x5096,0x509c,0x50aa,0x2032b,0x50b1,0x50ba,0x50bb,0x50c4,0x50c7,0x50f3,0x20381,0x50ce,0x20371,0x50d4,0x50d9,0x50e1,0x50e9,0x3492};
@@ -170,7 +165,7 @@ public class JisConverter
     }
 
     /** UTF8文字列として返却 */
-    public String toCharString(int men, int ku, int ten)
+    public static String toCharString(int men, int ku, int ten)
     {
         switch (men) {
         case 0: return (ku == 0) ? String.valueOf(men0[ten]) : null;
@@ -188,17 +183,13 @@ public class JisConverter
 
     /** UTF-8コードを文字列に変換
      * UTF-32の拡張領域は2文字分の文字列になる */
-    private String codeToCharString(int unicode)
+    private static String codeToCharString(int unicode)
     {
-        try {
-            if (unicode == 0) return null;
-            if (unicode > 0xFFFF) {
-                byte[] b = new byte[]{0, (byte)(unicode>>16), (byte)(unicode>>8), (byte)(unicode)};
-                return new String(b, "UTF-32");
-            }
-            return String.valueOf((char)unicode);
-        } catch (Exception e) {
+        if (unicode == 0) return null;
+        if (unicode > 0xFFFF) {
+            byte[] b = new byte[]{0, (byte)(unicode>>16), (byte)(unicode>>8), (byte)(unicode)};
+            return new String(b, Charset.forName("UTF-32"));
         }
-        return null;
+        return String.valueOf((char)unicode);
     }
 }
