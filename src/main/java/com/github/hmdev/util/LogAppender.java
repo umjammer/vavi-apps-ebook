@@ -1,30 +1,27 @@
 
 package com.github.hmdev.util;
 
+import java.util.function.Consumer;
 import java.util.logging.ErrorManager;
 import java.util.logging.Formatter;
 import java.util.logging.Handler;
 import java.util.logging.LogRecord;
 import java.util.logging.SimpleFormatter;
 
-import javax.swing.JTextArea;
 
 /** ログ出力Wrapperクラス */
 public class LogAppender extends Handler {
 
-    static JTextArea jTextArea = null;
+    private Consumer<String> appendable;
 
     Formatter formatter = new SimpleFormatter();
 
-    public LogAppender() {
+    public LogAppender(Consumer<String> appendable) {
+        setTarget(appendable);
     }
 
-    public LogAppender(JTextArea _jTextArea) {
-        jTextArea = _jTextArea;
-    }
-
-    public void setTarget(JTextArea _jTextArea) {
-        jTextArea = _jTextArea;
+    public void setTarget(Consumer<String> appendable) {
+        this.appendable = appendable;
     }
 
     @Override
@@ -41,7 +38,7 @@ public class LogAppender extends Handler {
         }
 
         try {
-            jTextArea.append(msg + "\n");
+            appendable.accept("<span style='color:#888888'>" + msg + "</span><br/>");
         } catch (Exception ex) {
             reportError(null, ex, ErrorManager.WRITE_FAILURE);
         }
@@ -49,7 +46,7 @@ public class LogAppender extends Handler {
 
     @Override
     public boolean isLoggable(LogRecord record) {
-        if (jTextArea == null || record == null) {
+        if (appendable == null || record == null) {
             return false;
         }
         return super.isLoggable(record);

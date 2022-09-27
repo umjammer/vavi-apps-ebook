@@ -59,8 +59,11 @@ import javax.swing.border.LineBorder;
 import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.plaf.FontUIResource;
+import javax.swing.text.BadLocationException;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.TextAction;
+import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.html.HTMLEditorKit;
 
 import org.apache.commons.compress.utils.IOUtils;
 
@@ -313,9 +316,25 @@ public class AozoraEpub3Applet extends JPanel
     JCheckBox jCheckWebModifiedTail;
     JTextField jTextWebModifiedExpire;
 
+    // https:// stackoverflow.com/a/27519294
+    static class MyTextPane extends JTextPane {
+        HTMLDocument doc;
+        {
+            this.setEditorKit(new HTMLEditorKit());
+            doc = (HTMLDocument) this.getStyledDocument();
+        }
+        void append(String text) {
+            try {
+                text = text.replace("\n", "<br/>");
+                doc.insertAfterEnd(doc.getCharacterElement(doc.getLength()), text);
+            } catch (BadLocationException | IOException e) {
+                throw new IllegalStateException(e);
+            }
+        }
+    }
     // テキストエリア
     // JScrollPane jScrollPane;
-    JTextArea jTextArea;
+    MyTextPane jTextArea;
 
     // プログレスバー
     JProgressBar jProgressBar;
@@ -2177,13 +2196,15 @@ public class AozoraEpub3Applet extends JPanel
         lowerPane.setLayout(new BoxLayout(lowerPane, BoxLayout.Y_AXIS));
         jSplitPane.add(lowerPane);
 
-        jTextArea = new JTextArea("AozoraEpub3: "+AozoraEpub3.VERSION);
+        jTextArea = new MyTextPane();
+        jTextArea.setBackground(Color.white);
+        jTextArea.append("AozoraEpub3: "+AozoraEpub3.VERSION);
         jTextArea.append("  ( Java "+System.getProperty("java.version"));
         jTextArea.append("  /  "+System.getProperty("os.name"));
         jTextArea.append(" )\n対応ファイル: 青空文庫txt(txt,zip,rar), 画像(zip,rar,cbz), URLショートカット(url)\n");
         jTextArea.append("ファイルまたはURL文字列をここにドラッグ＆ドロップ／ペーストで変換します。\n");
         jTextArea.setEditable(false);
-        jTextArea.setFont(new Font("Default", Font.PLAIN, 12));
+        jTextArea.setFont(new Font("Consolas", Font.PLAIN, 14));
         jTextArea.setBorder(new LineBorder(Color.white, 3));
         // new DropTarget(jTextArea, DnDConstants.ACTION_COPY_OR_MOVE, new DropListener(), true);
         jTextArea.setTransferHandler(new TextAreaTransferHandler("text"));
