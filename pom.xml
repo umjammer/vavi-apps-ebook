@@ -5,9 +5,9 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.github.hmdev</groupId>
-  <artifactId>AozoraEpub3</artifactId>
-  <version>1.1.1b12Q-SNAPSHOT</version>
+  <groupId>vavi</groupId>
+  <artifactId>vavi-apps-aozora2epub3</artifactId>
+  <version>1.1.2v-SNAPSHOT</version>
 
   <profiles>
     <profile>
@@ -62,13 +62,44 @@
                   <classpath>
                     <path refid="maven.compile.classpath"/>
                     <path refid="maven.test.classpath"/>
-                    <path refid="maven.plugin.classpath"/>
                   </classpath>
                   <jvmarg value="-Djava.util.logging.config.file=${project.build.testOutputDirectory}/logging.properties" />
                   <arg value="-of" />
                   <arg value="-d" />
                   <arg value="." />
                   <arg value="${infile}" />
+                </java>
+              </target>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <!-- mvn -P gui antrun:run -->
+      <id>gui</id>
+      <build>
+        <plugins>
+          <plugin>
+            <!-- GOOD: fork: OK, test jars: OK, user args, default args: OK -->
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <version>3.1.0</version>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <target>
+                <java classname="AozoraEpub3Applet" fork="true">
+                  <classpath>
+                    <path refid="maven.compile.classpath"/>
+                    <path refid="maven.test.classpath"/>
+                  </classpath>
+                  <jvmarg value="-Djava.util.logging.config.file=${project.build.testOutputDirectory}/logging.properties" />
+                  <jvmarg value="-Dswing.defaultlaf=com.formdev.flatlaf.FlatLightLaf" />
+                  <jvmarg value="-Dapple.laf.useScreenMenuBar=true" />
+                  <jvmarg value="-Dapple.awt.application.name=AozoraEpub3" />
                 </java>
               </target>
             </configuration>
@@ -140,7 +171,7 @@
       <dependency>
         <groupId>org.junit</groupId>
         <artifactId>junit-bom</artifactId>
-        <version>5.8.2</version>
+        <version>5.9.0</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -195,14 +226,16 @@
       <version>1.5.0</version>
     </dependency>
     <dependency>
+      <groupId>com.github.umjammer</groupId> <!-- com.github.umjammer -->
+      <artifactId>vavi-commons</artifactId>
+      <version>1.1.7</version>
+    </dependency>
+
+    <dependency>
       <groupId>com.formdev</groupId>
       <artifactId>flatlaf</artifactId>
-      <version>2.4</version>
-    </dependency>
-    <dependency>
-      <groupId>vavi</groupId> <!-- com.github.umjammer -->
-      <artifactId>vavi-commons</artifactId>
-      <version>1.1.7-SNAPSHOT</version>
+      <version>2.6</version>
+      <scope>runtime</scope>
     </dependency>
 
     <dependency>
