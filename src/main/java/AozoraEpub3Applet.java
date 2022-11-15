@@ -50,6 +50,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.logging.Handler;
 import java.util.logging.Logger;
@@ -88,7 +89,7 @@ import vavi.util.Debug;
 import vavix.util.ResourceList;
 
 /**
- * 青空文庫テキスト→ePub3変換操作用アプレット
+ * 青空文庫テキスト→ePub3変換操作用アプリ
  */
 public class AozoraEpub3Applet extends JPanel
 {
@@ -97,7 +98,7 @@ public class AozoraEpub3Applet extends JPanel
 
     static Logger logger = Logger.getLogger("com.github.hmdev");
 
-    /** アプレットが表示されているフレーム */
+    /** アプリが表示されているフレーム */
     JFrame jFrameParent;
     /** アプリケーションのアイコン画像 */
     Image iconImage;
@@ -394,7 +395,7 @@ public class AozoraEpub3Applet extends JPanel
         this.jFrameParent = parent;
     }
 
-    /** アプレット初期化 */
+    /** アプリ初期化 */
     private void init()
     {
         this.setSize(new Dimension(520, 460));
@@ -3309,12 +3310,12 @@ public class AozoraEpub3Applet extends JPanel
         int coverImageIndex = -1;
         // 表紙情報追加
         String coverFileName = this.jComboCover.getEditor().getItem().toString();
-        if (coverFileName.equals(this.jComboCover.getItemAt(0).toString())) {
+        if (coverFileName.equals(this.jComboCover.getItemAt(0))) {
             coverFileName = ""; // 先頭の挿絵
             coverImageIndex = 0;
         } else if (coverFileName.equals(this.jComboCover.getItemAt(1).toString())) {
             coverFileName = AozoraEpub3.getSameCoverFileName(srcFile); // 入力ファイルと同じ名前+.jpg/.png
-        } else if (coverFileName.equals(this.jComboCover.getItemAt(2).toString())) {
+        } else if (coverFileName.equals(this.jComboCover.getItemAt(2))) {
             coverFileName = null; // 表紙無し
         }
 
@@ -3342,7 +3343,7 @@ public class AozoraEpub3Applet extends JPanel
         String encType = (String)jComboEncType.getSelectedItem();
         try {
             encauto=AozoraEpub3.getTextCharset(srcFile, ext, imageInfoReader, txtIdx);
-            if (encauto=="SHIFT_JIS")encauto="MS932";
+            if (Objects.equals(encauto, "SHIFT_JIS"))encauto="MS932";
         } catch (IOException | RarException e1) {
             // TODO 自動生成された catch ブロック
             e1.printStackTrace();
@@ -3350,9 +3351,9 @@ public class AozoraEpub3Applet extends JPanel
 
 //        logger.info(encauto);
         if (encauto==null)encauto="UTF-8";
-         if (this.jComboEncType.getSelectedItem().toString().equals("AUTO")) {
+        if (this.jComboEncType.getSelectedItem().toString().equals("AUTO")) {
              encType=encauto;
-         }
+        }
         // BookInfo取得
         BookInfo bookInfo = null;
 logger.info("encType: " + encType);
@@ -3469,7 +3470,7 @@ logger.info("encType: " + encType);
                 } else {
                     coverImageIndex = bookInfo.firstImageIdx;
                 }
-            } catch (Exception e) {}
+            } catch (Exception ignored) {}
         }
 
         // 表紙ページの情報をbookInfoに設定
@@ -3646,19 +3647,18 @@ logger.info("encType: " + encType);
                 return;
             }
         }
-        /*
-        if (overWrite &&  outFile.exists()) {
-            int ret = JOptionPane.showConfirmDialog(this, "ファイルが存在します\n上書きしますか？\n(取り消しで変換キャンセル)", "上書き確認", JOptionPane.YES_NO_CANCEL_OPTION);
-            if (ret == JOptionPane.NO_OPTION) {
-                logger.info("変換中止: "+srcFile.getAbsolutePath());
-                return;
-            } else if (ret == JOptionPane.CANCEL_OPTION) {
-                logger.info("変換中止: "+srcFile.getAbsolutePath());
-                convertCanceled = true;
-                logger.info("変換処理をキャンセルしました");
-                return;
-            }
-        }*/
+//        if (overWrite &&  outFile.exists()) {
+//            int ret = JOptionPane.showConfirmDialog(this, "ファイルが存在します\n上書きしますか？\n(取り消しで変換キャンセル)", "上書き確認", JOptionPane.YES_NO_CANCEL_OPTION);
+//            if (ret == JOptionPane.NO_OPTION) {
+//                logger.info("変換中止: "+srcFile.getAbsolutePath());
+//                return;
+//            } else if (ret == JOptionPane.CANCEL_OPTION) {
+//                logger.info("変換中止: "+srcFile.getAbsolutePath());
+//                convertCanceled = true;
+//                logger.info("変換処理をキャンセルしました");
+//                return;
+//            }
+//        }
 
         //
         // 変換実行
@@ -3697,12 +3697,12 @@ logger.info("encType: " + encType);
                 String line;
                 int idx = 0;
                 int cnt = 0;
-                String msg = "";
+                StringBuilder msg = new StringBuilder();
                 while ((line = br.readLine()) != null) {
                     if (line.length() > 0) {
                         System.out.println(line);
-                        if (msg.startsWith("Error")) msg += line;
-                        else msg = line;
+                        if (msg.toString().startsWith("Error")) msg.append(line);
+                        else msg = new StringBuilder(line);
                         if (idx++ % 2 == 0) {
                             if (cnt++ > 100) { cnt = 1; logger.info(""); }
                             logger.info(".");
@@ -3783,13 +3783,13 @@ logger.info("encType: " + encType);
                 }
 
                 int interval = 500;
-                try { interval = (int)(Float.parseFloat(jTextWebInterval.getText())*1000); } catch (Exception e) {}
+                try { interval = (int)(Float.parseFloat(jTextWebInterval.getText())*1000); } catch (Exception ignored) {}
                 int beforeChapter = 0;
                 if (this.jCheckWebBeforeChapter.isSelected()) {
-                    try { beforeChapter = Integer.parseInt(jTextWebBeforeChapterCount.getText()); } catch (Exception e) {}
+                    try { beforeChapter = Integer.parseInt(jTextWebBeforeChapterCount.getText()); } catch (Exception ignored) {}
                 }
                 float modifiedExpire = 0;
-                try { modifiedExpire = Float.parseFloat(jTextWebModifiedExpire.getText()); } catch (Exception e) {}
+                try { modifiedExpire = Float.parseFloat(jTextWebModifiedExpire.getText()); } catch (Exception ignored) {}
                 // キャッシュパス
                 if (!this.cachePath.isDirectory()) {
                     this.cachePath.mkdirs();
@@ -3857,24 +3857,27 @@ logger.info("encType: " + encType);
     }
 
     /** キャッシュパスを取得 */
-    private File getCachePath()
-    {
+    private File getCachePath() {
         String cachePathString = this.jTextCachePath.getText().trim();
         if("".equals(cachePathString)) cachePathString = this.jarPath+".cache";
         return new File(cachePathString);
     }
+
     /** キャッシュパスを以下のファイルならtrue */
-    private boolean isCacheFile(File file)
-    {
+    private boolean isCacheFile(File file) {
         try {
             return file.getCanonicalPath().startsWith(this.getCachePath().getCanonicalPath());
-        } catch (IOException e) {
+        } catch (IOException ignored) {
         }
         return false;
     }
+
     //
-    /** 別スレッド実行用SwingWorkerを実行
-     * @param dstPath 出力先 ブラウザからまたはURLペーストの場合はnull */
+
+    /**
+     * 別スレッド実行用SwingWorkerを実行
+     * @param dstPath 出力先 ブラウザからまたはURLペーストの場合はnull
+     */
     void startConvertWorker(List<File> vecFiles, List<String> vecUrlString, List<File> vecUrlSrcFile, File dstPath)
     {
         // 出力先が指定されていない場合は選択させる
@@ -3921,8 +3924,7 @@ logger.info("encType: " + encType);
     }
 
     /** 別スレッド実行用SwingWorker */
-    class ConvertWorker extends SwingWorker<Object, Object>
-    {
+    class ConvertWorker extends SwingWorker<Object, Object> {
         /** 面倒なのでAppletを渡す */
         AozoraEpub3Applet applet;
         /** 変換対象ファイル */
@@ -3935,8 +3937,7 @@ logger.info("encType: " + encType);
         File dstPath = null;
 
         /** @param dstPath ショートカットファイルなら同じ場所出力用に指定 */
-        public ConvertWorker(List<File> vecFiles, List<String> vecUrlString, List<File> vecUrlSrcFile, File dstPath)
-        {
+        public ConvertWorker(List<File> vecFiles, List<String> vecUrlString, List<File> vecUrlSrcFile, File dstPath) {
             this.applet = getApplet();
 
             this.vecFiles = vecFiles;
@@ -3947,8 +3948,7 @@ logger.info("encType: " + encType);
         }
 
         @Override
-        protected Object doInBackground() throws Exception
-        {
+        protected Object doInBackground() throws Exception {
             this.applet.running = true;
             this.applet.setConvertEnabled(false);
             try {
@@ -3971,8 +3971,7 @@ logger.info("encType: " + encType);
         }
 
         @Override
-        protected void done()
-        {
+        protected void done() {
             super.done();
             this.applet.setConvertEnabled(true);
             this.applet.running = false;
@@ -3980,18 +3979,17 @@ logger.info("encType: " + encType);
     }
 
     /** イベント内でWorker初期化する用 */
-    private AozoraEpub3Applet getApplet()
-    {
+    private AozoraEpub3Applet getApplet() {
         return this;
     }
+
     /** Worker実行中フラグ取得 */
-    private boolean isRunning()
-    {
+    private boolean isRunning() {
         return this.running;
     }
+
     /** 変換中に操作不可にするコンポーネントのenabledを設定 */
-    private void setConvertEnabled(boolean enabled)
-    {
+    private void setConvertEnabled(boolean enabled) {
         for (Component c : this.topPanel.getComponents()) this.setEnabledAll(c, enabled);
         for (Component c : this.jTabbedPane.getComponents()) this.setEnabledAll(c, enabled);
         jRadioVertical.getComponent(0).setEnabled(enabled);
@@ -4003,11 +4001,10 @@ logger.info("encType: " + encType);
         if (enabled) {
             this.setProfileMoveEnable();
         }
-
     }
+
     /** コンポーネント内をすべてsetEnabled */
-    private void setEnabledAll(Component c, boolean b)
-    {
+    private void setEnabledAll(Component c, boolean b) {
         if (c instanceof JPanel) {
             for (Component c2 : ((Container)c).getComponents()) setEnabledAll(c2, b);
         } else { // if (!(c instanceof JLabel)) {
@@ -4015,8 +4012,7 @@ logger.info("encType: " + encType);
         }
     }
 
-    private void setResizeTextEditable(boolean enabled)
-    {
+    private void setResizeTextEditable(boolean enabled) {
         if (enabled) {
             this.jTextResizeNumW.setEditable(jCheckResizeW.isSelected());
             this.jTextResizeNumH.setEditable(jCheckResizeH.isSelected());
@@ -4031,8 +4027,7 @@ logger.info("encType: " + encType);
     }
 
     // ディレクトリ以下を削除  パス注意
-    void deleteFiles(File path)
-    {
+    void deleteFiles(File path) {
         if (path.isDirectory()) {
             for (File file : path.listFiles()) {
                 if (file.isDirectory()) deleteFiles(file);
@@ -4045,9 +4040,9 @@ logger.info("encType: " + encType);
     //
     // Properties
     //
+
     /** "1"が設定されている場合のみチェックをON nullなら変更しない */
-    private boolean setPropsSelected(JToggleButton button, Properties props, String name)
-    {
+    private boolean setPropsSelected(JToggleButton button, Properties props, String name) {
         if (props.containsKey(name)) {
             boolean selected = "1".equals(props.getProperty(name));
             button.setSelected(selected);
@@ -4055,9 +4050,9 @@ logger.info("encType: " + encType);
         }
         return button.isSelected();
     }
+
     /** "1"が設定されている場合のみチェックをON nullなら変更しない */
-    private boolean setPropsSelected(JToggleButton button, Properties props, String name, boolean nullSelect)
-    {
+    private boolean setPropsSelected(JToggleButton button, Properties props, String name, boolean nullSelect) {
         if (props.containsKey(name)) {
             boolean selected = "1".equals(props.getProperty(name));
             button.setSelected(selected);
@@ -4067,44 +4062,45 @@ logger.info("encType: " + encType);
         }
         return button.isSelected();
     }
+
     /** テキスト値を設定 null なら設定しない */
-    private void setPropsText(JTextField jText, Properties props, String name)
-    {
+    private void setPropsText(JTextField jText, Properties props, String name) {
         try {
             if (!props.containsKey(name)) return;
             jText.setText(props.getProperty(name));
-        } catch (Exception e) {}
+        } catch (Exception ignored) {}
     }
+
     /** int値を設定 null なら設定しない */
-    private void setPropsIntText(JTextField jText, Properties props, String name)
-    {
+    private void setPropsIntText(JTextField jText, Properties props, String name) {
         try {
             if (!props.containsKey(name)) return;
             jText.setText(Integer.toString(Integer.parseInt(props.getProperty(name))));
-        } catch (Exception e) {}
+        } catch (Exception ignored) {}
     }
+
     /** float値を設定 null なら設定しない */
-    private void setPropsFloatText(JTextField jText, Properties props, String name)
-    {
+    private void setPropsFloatText(JTextField jText, Properties props, String name) {
         try {
             if (!props.containsKey(name)) return;
             jText.setText(Float.toString(Float.parseFloat(props.getProperty(name))));
-        } catch (Exception e) {}
+        } catch (Exception ignored) {}
     }
+
     /** 数値を設定 null なら設定しない */
-    private void setPropsNumberText(JTextField jText, Properties props, String name)
-    {
+    private void setPropsNumberText(JTextField jText, Properties props, String name) {
         try {
             if (!props.containsKey(name)) return;
             jText.setText(NumberFormat.getNumberInstance().format(Float.parseFloat(props.getProperty(name))));
         } catch (Exception e) {}
     }
 
-    /** プロファイルを新規保存
+    /**
+     * プロファイルを新規保存
      * @throws IOException
-     * @throws FileNotFoundException */
-    private void addProfile(String name) throws FileNotFoundException, IOException
-    {
+     * @throws FileNotFoundException
+     */
+    private void addProfile(String name) throws FileNotFoundException, IOException {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd-HHmmss");
         File profile = new File(profilePath.getPath()+"/"+dateFormat.format(new Date())+".ini");
         int i = 1;
@@ -4128,9 +4124,9 @@ logger.info("encType: " + encType);
         // 移動ボタン有効化
         setProfileMoveEnable();
     }
+
     /** プロファイルを削除 */
-    private void deleteProfile()
-    {
+    private void deleteProfile() {
         if (jComboProfile.getItemCount() == 1) return;
         ProfileInfo propInfo = (ProfileInfo)jComboProfile.getSelectedItem();
         if (propInfo.getFileName() != null) {
@@ -4146,8 +4142,8 @@ logger.info("encType: " + encType);
             setProfileMoveEnable();
         }
     }
-    private void editProfile(String name) throws IOException
-    {
+
+    private void editProfile(String name) throws IOException {
         if (name == null) return;
         name = name.trim();
         if (name.length() == 0) return;
@@ -4166,15 +4162,13 @@ logger.info("encType: " + encType);
     }
 
     /** 移動ボタン有効化 */
-    private void setProfileMoveEnable()
-    {
+    private void setProfileMoveEnable() {
         jButtonProfileUp.setEnabled(jComboProfile.getSelectedIndex() > 0);
         jButtonProfileDown.setEnabled(jComboProfile.getSelectedIndex() < jComboProfile.getItemCount()-1);
     }
 
-    /** propsの値をアプレットに設定 */
-    private void loadProperties(Properties props)
-    {
+    /** propsの値をアプリに設定 */
+    private void loadProperties(Properties props) {
         boolean selected;
 
         // 表題
@@ -4404,7 +4398,7 @@ logger.info("encType: " + encType);
         setPropsIntText(jTextWebBeforeChapterCount, props, "WebBeforeChapterCount");
     }
 
-    /** アプレットの設定状態をpropsに保存 */
+    /** アプリの設定状態をpropsに保存 */
     private void setProperties(Properties props)
     {
         // アップレット設定の保存
@@ -4567,9 +4561,9 @@ logger.info("encType: " + encType);
     //
     // JFrame
     //
+
     /** Jar実行用 */
-    public static void main(String[] args)
-    {
+    public static void main(String[] args) {
         // LookAndFeel変更
         try {
             String lafName = UIManager.getSystemLookAndFeelClassName();
@@ -4587,11 +4581,11 @@ logger.info("encType: " + encType);
                     }
                 }
             }
-
         } catch(Exception e) { e.printStackTrace(); }
 
         // フレーム初期化
         final JFrame jFrame = new JFrame("AozoraEpub3");
+        jFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         // アップレット生成と初期化
         final AozoraEpub3Applet applet = new AozoraEpub3Applet(jFrame);
         applet.iconImage = java.awt.Toolkit.getDefaultToolkit().createImage(AozoraEpub3Applet.class.getResource("images/icon.png"));
@@ -4607,14 +4601,14 @@ logger.info("encType: " + encType);
             int x = (int)Float.parseFloat(applet.props.getProperty("PosX"));
             int y = (int)Float.parseFloat(applet.props.getProperty("PosY"));
             jFrame.setLocation(x, y);
-        } catch (Exception e) {}
+        } catch (Exception ignored) {}
 
         jFrame.setSize(applet.getSize());
         try {
             int w = (int)Float.parseFloat(applet.props.getProperty("SizeW"));
             int h = (int)Float.parseFloat(applet.props.getProperty("SizeH"));
             jFrame.setSize(w, h);
-        } catch (Exception e) {}
+        } catch (Exception ignored) {}
 
         jFrame.addWindowListener(new WindowAdapter() {
             @Override
@@ -4630,7 +4624,6 @@ logger.info("encType: " + encType);
                 } catch (Throwable e) {
                     e.printStackTrace();
                 }
-                System.exit(0);
             }
         });
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -4660,20 +4653,19 @@ logger.info("encType: " + encType);
         applet.jTabbedPane.requestFocus();
     }
 
-    /** アプレット終了時の処理
-     * 設定ファイルを保存 */
-    private void terminate() throws Throwable
-    {
+    /**
+     * アプリ終了時の処理
+     * 設定ファイルを保存
+     */
+    private void terminate() throws Throwable {
         this.convertCanceled = true;
 
-        /*
-        try {
-            // tmp削除
-            if (tmpPath != null) this.deleteFiles(this.tmpPath);
-            // キャッシュファイル削除
-            if (cachePath != null) this.deleteFiles(this.cachePath);
-        } catch (Exception e) { e.printStackTrace(); }
-        */
+//        try {
+//            // tmp削除
+//            if (tmpPath != null) this.deleteFiles(this.tmpPath);
+//            // キャッシュファイル削除
+//            if (cachePath != null) this.deleteFiles(this.cachePath);
+//        } catch (Exception e) { e.printStackTrace(); }
 
         // Spliterの位置
         this.props.setProperty("DividerLocation", ""+this.jSplitPane.getDividerLocation());
@@ -4684,8 +4676,8 @@ logger.info("encType: " + encType);
         // プロファイルの順番を記憶
         try {
             StringBuilder propList = new StringBuilder();
-            for (int i=0; i<this.jComboProfile.getItemCount(); i++) {
-                propInfo = (ProfileInfo)this.jComboProfile.getItemAt(i);
+            for (int i = 0; i < this.jComboProfile.getItemCount(); i++) {
+                propInfo = this.jComboProfile.getItemAt(i);
                 propList.append(",").append(propInfo.getFileName());
             }
             propList.deleteCharAt(0);
@@ -4712,9 +4704,9 @@ logger.info("encType: " + encType);
             }
             this.props.setProperty("DstPathList", dstPathList);
         } catch (Exception e) { e.printStackTrace(); }
-        this.props.setProperty("LastDir", this.currentPath==null?"":this.currentPath.getAbsolutePath());
+        this.props.setProperty("LastDir", this.currentPath == null ? "" : this.currentPath.getAbsolutePath());
 
-        // アプレットの設定をPropertiesに反映
+        // アプリの設定をPropertiesに反映
         this.setProperties(this.props);
 
         // 設定ファイル更新
@@ -4726,6 +4718,7 @@ logger.info("encType: " + encType);
     //
     // 変換履歴
     //
+
     /** 変換履歴格納用 最大255件 */
     LinkedHashMap<String, BookInfoHistory> mapBookInfoHistory = new LinkedHashMap<>() {
         @Serial
@@ -4737,18 +4730,15 @@ logger.info("encType: " + encType);
     };
 
     // 以前の変換情報取得
-    BookInfoHistory getBookInfoHistory(BookInfo bookInfo)
-    {
+    BookInfoHistory getBookInfoHistory(BookInfo bookInfo) {
         String key = bookInfo.srcFile.getAbsolutePath();
-        if (bookInfo.textEntryName != null) key += "/"+bookInfo.textEntryName;
+        if (bookInfo.textEntryName != null) key += "/" + bookInfo.textEntryName;
         return mapBookInfoHistory.get(key);
     }
 
-    void setBookInfoHistory(BookInfo bookInfo)
-    {
+    void setBookInfoHistory(BookInfo bookInfo) {
         String key = bookInfo.srcFile.getAbsolutePath();
-        if (bookInfo.textEntryName != null) key += "/"+bookInfo.textEntryName;
+        if (bookInfo.textEntryName != null) key += "/" + bookInfo.textEntryName;
         mapBookInfoHistory.put(key, new BookInfoHistory(bookInfo));
     }
-
 }

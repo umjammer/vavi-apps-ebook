@@ -17,10 +17,6 @@ public final class LogAppender extends Handler {
     private final Formatter formatter = new SimpleFormatter();
 
     public LogAppender(Consumer<String> appendable) {
-        setTarget(appendable);
-    }
-
-    public void setTarget(Consumer<String> appendable) {
         this.appendable = appendable;
     }
 

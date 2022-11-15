@@ -1,9 +1,6 @@
 package com.github.hmdev.converter;
 
-import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Scanner;
@@ -14,7 +11,7 @@ import java.util.logging.Logger;
  */
 public class LatinConverter
 {
-    static Logger logger = Logger.getLogger("com.github.hmdev");
+    static final Logger logger = Logger.getLogger("com.github.hmdev");
 
     /** 分解表記文字列→拡張ラテン文字の対応テーブル */
     HashMap<String, Character> latinMap = new HashMap<>();

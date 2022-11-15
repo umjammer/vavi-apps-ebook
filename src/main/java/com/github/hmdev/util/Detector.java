@@ -12,6 +12,7 @@ public class Detector {
 
     static Logger logger = Logger.getLogger("com.github.hmdev");
 
+    /** @return null not found */
     public static String getCharset(InputStream is) throws IOException {
         byte[] buf = new byte[4096];
         // (1)
