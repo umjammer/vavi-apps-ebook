@@ -235,12 +235,16 @@
       <version>1.1.8</version>
     </dependency>
 
+    <dependency>
       <groupId>com.github.umjammer.vavi-apps-fuse</groupId> <!-- com.github.umjammer.vavi-apps-fuse -->
       <artifactId>vavi-nio-file-archive</artifactId>
       <version>0.1.8</version>
+    </dependency>
+    <dependency>
       <groupId>vavi</groupId>
       <artifactId>vavi-util-screenscraping</artifactId>
       <version>1.0.11</version>
+    </dependency>
 
     <dependency>
       <groupId>com.formdev</groupId>
@@ -266,8 +270,16 @@
     </dependency>
 
     <dependency>
+      <groupId>com.itextpdf</groupId>
+      <artifactId>kernel</artifactId>
+      <version>7.0.5</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>com.itextpdf</groupId>
+      <artifactId>forms</artifactId>
+      <version>7.0.5</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 </project>
