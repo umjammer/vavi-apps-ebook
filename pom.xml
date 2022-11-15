@@ -6,7 +6,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>vavi</groupId>
-  <artifactId>vavi-apps-aozora2epub3</artifactId>
+  <artifactId>vavi-apps-ebook</artifactId>
   <version>1.1.2v-SNAPSHOT</version>
 
   <profiles>
@@ -235,6 +235,13 @@
       <version>1.1.8</version>
     </dependency>
 
+      <groupId>com.github.umjammer.vavi-apps-fuse</groupId> <!-- com.github.umjammer.vavi-apps-fuse -->
+      <artifactId>vavi-nio-file-archive</artifactId>
+      <version>0.1.8</version>
+      <groupId>vavi</groupId>
+      <artifactId>vavi-util-screenscraping</artifactId>
+      <version>1.0.11</version>
+
     <dependency>
       <groupId>com.formdev</groupId>
       <artifactId>flatlaf</artifactId>
@@ -259,14 +266,8 @@
     </dependency>
 
     <dependency>
-      <groupId>com.github.umjammer.vavi-apps-fuse</groupId> <!-- com.github.umjammer.vavi-apps-fuse -->
-      <artifactId>vavi-nio-file-archive</artifactId>
-      <version>0.1.8</version>
     </dependency>
     <dependency>
-      <groupId>vavi</groupId>
-      <artifactId>vavi-util-screenscraping</artifactId>
-      <version>1.0.11</version>
     </dependency>
   </dependencies>
 </project>
