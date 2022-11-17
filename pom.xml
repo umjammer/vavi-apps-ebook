@@ -210,9 +210,9 @@
       <version>1.21</version>
     </dependency>
     <dependency>
-      <groupId>org.apache.velocity</groupId>
-      <artifactId>velocity</artifactId>
-      <version>1.7</version>
+      <groupId>org.apache.velocity.tools</groupId>
+      <artifactId>velocity-tools-generic</artifactId>
+      <version>3.1</version>
     </dependency>
     <dependency>
       <groupId>org.jsoup</groupId>
