@@ -21,24 +21,24 @@ public class FileNameComparator implements Comparator<String>
 
     char replace(char c)
     {
-        switch (c) {
-        case '_': return '/';
-        case '一': return '一';
-        case '二': return '一'+1;
-        case '三': return '一'+2;
-        case '四': return '一'+3;
-        case '五': return '一'+4;
-        case '六': return '一'+5;
-        case '七': return '一'+6;
-        case '八': return '一'+7;
-        case '九': return '一'+8;
-        case '十': return '一'+9;
-        case '上': return '上';
-        case '前': return '上'+1;
-        case '中': return '上'+2;
-        case '下': return '上'+3;
-        case '後': return '上'+4;
-        default: return c;
-        }
+        return switch (c) {
+            case '_' -> '/';
+            case '一' -> '一';
+            case '二' -> '一' + 1;
+            case '三' -> '一' + 2;
+            case '四' -> '一' + 3;
+            case '五' -> '一' + 4;
+            case '六' -> '一' + 5;
+            case '七' -> '一' + 6;
+            case '八' -> '一' + 7;
+            case '九' -> '一' + 8;
+            case '十' -> '一' + 9;
+            case '上' -> '上';
+            case '前' -> '上' + 1;
+            case '中' -> '上' + 2;
+            case '下' -> '上' + 3;
+            case '後' -> '上' + 4;
+            default -> c;
+        };
     }
 }

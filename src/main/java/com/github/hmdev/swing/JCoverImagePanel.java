@@ -25,7 +25,9 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.Serial;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import javax.swing.JPanel;
@@ -38,6 +40,7 @@ import com.github.hmdev.info.CoverEditInfo;
  */
 public class JCoverImagePanel extends JPanel implements MouseListener, MouseMotionListener, MouseWheelListener, DropTargetListener, KeyListener
 {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     BookInfo bookInfo;
@@ -105,7 +108,7 @@ public class JCoverImagePanel extends JPanel implements MouseListener, MouseMoti
                 g.setClip(0, 0, (int)this.visibleWidth, this.getHeight());
                 g.setColor(Color.WHITE);
                 g.fillRect((int)x, 0, (int)Math.min(this.previewImage.getWidth()-x, this.visibleWidth), this.previewImage.getHeight());
-                g.drawImage(this.previewImage, (int)x, (int)y, this);
+                g.drawImage(this.previewImage, (int)x, y, this);
             }
         }
     }
@@ -263,7 +266,7 @@ public class JCoverImagePanel extends JPanel implements MouseListener, MouseMoti
             return;
         }
         if (this.visibleWidth <= 0) this.visibleWidth = this.getWidth();
-        this.minScale = Math.min((double)this.visibleWidth/bookInfo.coverImage.getWidth(), (double)this.getHeight()/this.bookInfo.coverImage.getHeight());
+        this.minScale = Math.min(this.visibleWidth /bookInfo.coverImage.getWidth(), (double)this.getHeight()/this.bookInfo.coverImage.getHeight());
         switch (this.fitType) {
         case FIT_ALL:
             this.scale = minScale; break;
@@ -386,7 +389,7 @@ public class JCoverImagePanel extends JPanel implements MouseListener, MouseMoti
             if (transfer.isDataFlavorSupported(DataFlavor.stringFlavor)) {
                 bookInfo.coverFileName = transfer.getTransferData(DataFlavor.stringFlavor).toString();
                 if (bookInfo.coverFileName.startsWith("file://"))
-                    bookInfo.coverFileName = URLDecoder.decode(bookInfo.coverFileName.substring(0, bookInfo.coverFileName.indexOf('\n')-1).substring(7).trim(),"UTF-8");
+                    bookInfo.coverFileName = URLDecoder.decode(bookInfo.coverFileName.substring(0, bookInfo.coverFileName.indexOf('\n')-1).substring(7).trim(), StandardCharsets.UTF_8);
                 bookInfo.loadCoverImage(bookInfo.coverFileName);
                 bookInfo.coverImageIndex = -1;
                 this.setFitType(FIT_ALL, true);
@@ -396,7 +399,6 @@ public class JCoverImagePanel extends JPanel implements MouseListener, MouseMoti
             }
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
         }
         this.requestFocus();
     }

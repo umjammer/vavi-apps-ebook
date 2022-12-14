@@ -153,8 +153,9 @@ public class ImageUtils
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 IOUtils.copy(is, baos);
                 imgBuf = baos.toByteArray();
-                ByteArrayInputStream bais = new ByteArrayInputStream(imgBuf);
-                try { srcImage = readImage(ext, bais); } finally { bais.close(); }
+                try (ByteArrayInputStream bais = new ByteArrayInputStream(imgBuf)) {
+                    srcImage = readImage(ext, bais);
+                }
             }
             margin = getPlainMargin(srcImage, autoMarginLimitH/100f, autoMarginLimitV/100f, autoMarginWhiteLevel/100f, autoMarginPadding/100f, startPixel, ignoreEdge, dustSize, autoMarginNombre, nombreSize);
             if (margin[0]==0 && margin[1]==0 && margin[2]==0 && margin[3]==0) margin = null;
@@ -196,8 +197,9 @@ public class ImageUtils
             } else {
                 if (margin == null && imgBuf != null && imageInfo.rotateAngle==0) {
                     //余白除去が無く画像も編集されていなければバッファからそのまま出力
-                    ByteArrayInputStream bais = new ByteArrayInputStream(imgBuf);
-                    try { IOUtils.copy(bais, zos); } finally { bais.close(); }
+                    try (ByteArrayInputStream bais = new ByteArrayInputStream(imgBuf)) {
+                        IOUtils.copy(bais, zos);
+                    }
                 } else {
                     //編集済の画像なら同じ画像形式で書き出し 余白があれば切り取る
                     if (imageInfo.rotateAngle != 0) {
@@ -374,8 +376,7 @@ public class ImageUtils
             e.printStackTrace();
         }
     }
-    /** 画像を出力 マージン指定があればカット
-     * @param margin カットするピクセル数(left, top, right, bottom) */
+    /** 画像を出力 */
     static private void _writeImage(ZipArchiveOutputStream zos, BufferedImage srcImage, String ext, float jpegQuality) throws IOException
     {
         if ("png".equals(ext)) {
@@ -589,7 +590,7 @@ public class ImageUtils
         } else { // 内側へ
             margin[2] = startPixel;
             for (int i=startPixel+1; i<=limitPxH; i++) {
-                coloredPixels = getColordPixelsV(image, height, width-1-i, rgbLimit, 05, ignoreTop, ignoreBottom, dustSize);
+                coloredPixels = getColordPixelsV(image, height, width-1-i, rgbLimit, 5, ignoreTop, ignoreBottom, dustSize);
                 if (coloredPixels == 0) margin[2] = i;
                 else break;
             }

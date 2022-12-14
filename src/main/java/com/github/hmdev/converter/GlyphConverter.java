@@ -6,6 +6,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.logging.Logger;
 
@@ -37,22 +38,21 @@ public class GlyphConverter
      * @throws IOException */
     private void loadCidFile(StringBuilder log, File srcFile, HashMap<Character, String> cidMap) throws IOException
     {
-        BufferedReader src = new BufferedReader(new InputStreamReader(new FileInputStream(srcFile), "UTF-8"));
-        String line;
-        int lineNum = 0;
-        try {
+        try (BufferedReader src = new BufferedReader(new InputStreamReader(new FileInputStream(srcFile), StandardCharsets.UTF_8))) {
+            String line;
+            int lineNum = 0;
             while ((line = src.readLine()) != null) {
                 lineNum++;
-                if (line.length() > 0 && line.charAt(0)!='#') {
+                if (line.length() > 0 && line.charAt(0) != '#') {
                     try {
                         String[] values = line.split("\t");
                         char ch = values[0].charAt(0);
                         if (!cidMap.containsKey(ch)) cidMap.put(ch, values[1]);
-                    } catch (Exception e) { logger.severe(lineNum + " " + srcFile.getName() + " " + line); }
+                    } catch (Exception e) {
+                        logger.severe(lineNum + " " + srcFile.getName() + " " + line);
+                    }
                 }
             }
-        } finally {
-            src.close();
         }
     }
 
@@ -64,7 +64,7 @@ public class GlyphConverter
         char[] arr;
         while ((line=src.readLine()) != null) {
             arr = line.toCharArray();
-            for (int i=0; i<arr.length; i++) this.printGlyphTag(out, arr[i]);
+            for (char c : arr) this.printGlyphTag(out, c);
             out.write('\n');
         }
     }

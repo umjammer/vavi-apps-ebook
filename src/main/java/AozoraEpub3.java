@@ -329,22 +329,30 @@ public class AozoraEpub3
                 int txtCount = 1;
                 boolean imageOnly = false;
                 boolean isFile = "txt".equals(ext);
-                if ("zip".equals(ext) || "txtz".equals(ext)) {
+                switch (ext) {
+                case "zip", "txtz" -> {
                     try {
                         txtCount = AozoraEpub3.countZipText(srcFile);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                    if (txtCount == 0) { txtCount = 1; imageOnly = true; }
-                } else if("rar".equals(ext)) {
+                    if (txtCount == 0) {
+                        txtCount = 1;
+                        imageOnly = true;
+                    }
+                }
+                case "rar" -> {
                     try {
                         txtCount = AozoraEpub3.countRarText(srcFile);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                    if (txtCount == 0) { txtCount = 1; imageOnly = true; }
-                } else if ("cbz".equals(ext)) {
-                    imageOnly = true;
+                    if (txtCount == 0) {
+                        txtCount = 1;
+                        imageOnly = true;
+                    }
+                }
+                case "cbz" -> imageOnly = true;
                 }
                 for (int txtIdx=0; txtIdx<txtCount; txtIdx++) {
                     ImageInfoReader imageInfoReader = new ImageInfoReader(isFile, srcFile);
@@ -482,7 +490,7 @@ Thread.getAllStackTraces().keySet().forEach(System.err::println);
             if (is == null) return null;
 
             // タイトル、画像注記、左右中央注記、目次取得
-            BufferedReader src = new BufferedReader(new InputStreamReader(is, (String)encType));
+            BufferedReader src = new BufferedReader(new InputStreamReader(is, encType));
             BookInfo bookInfo = aozoraConverter.getBookInfo(srcFile, src, imageInfoReader, titleType, pubFirst);
             is.close();
             bookInfo.textEntryName = textEntryName[0];

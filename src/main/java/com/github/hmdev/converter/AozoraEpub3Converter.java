@@ -1346,7 +1346,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
             String chuki = m.group();
             chukiStart = m.start();
 
-            buf.append(line.substring(begin, chukiStart));
+            buf.append(line, begin, chukiStart);
 
             // 外字はUTF-8に変換してそのまま継続
             if (chuki.charAt(0) == '※') {
@@ -1443,7 +1443,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
         } while (m.find());
 
         // 残りの文字をつなげて返却
-        return buf.toString()+line.substring(begin);
+        return buf +line.substring(begin);
     }
 
     /** 注記内かチェック
@@ -1481,7 +1481,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
         int innerTagStart = 0;
         while (mTag.find()) {
             // 注記前まで出力
-            if (innerTagLevel <= 1) buf.append(line.substring(mTagEnd, mTag.start()));
+            if (innerTagLevel <= 1) buf.append(line, mTagEnd, mTag.start());
             mTagEnd = mTag.end();
             String tag = mTag.group();
             if ("］".equals(tag)) {
@@ -1697,7 +1697,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                     // 訓点送り仮名チェック ＃の次が（で.を含まない
                     if (imageStartIdx == 2 && chukiTag.endsWith("）］") && chukiTag.indexOf('.', 2) == -1) {
                         buf.append(chukiMap.get("行右小書き")[0]);
-                        buf.append(chukiTag.substring(3, chukiTag.length()-2));
+                        buf.append(chukiTag, 3, chukiTag.length()-2);
                         buf.append(chukiMap.get("行右小書き終わり")[0]);
                     } else if (chukiTag.indexOf('.', 2) == -1) {
                         // 拡張子を含まない
@@ -2092,7 +2092,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                     // 訓点送り仮名チェック ＃の次が（で.を含まない
                     if (imageStartIdx == 2 && chukiTag.endsWith("）］") && chukiTag.indexOf('.', 2) == -1) {
                         buf.append(chukiMap.get("行右小書き")[0]);
-                        buf.append(chukiTag.substring(3, chukiTag.length()-2));
+                        buf.append(chukiTag, 3, chukiTag.length()-2);
                         buf.append(chukiMap.get("行右小書き終わり")[0]);
                     } else if (chukiTag.indexOf('.', 2) == -1) {
                         // 拡張子を含まない
@@ -2253,7 +2253,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                             inJisage = lineNum;
 
                             int arg0 = Integer.parseInt(CharUtils.fullToHalf(m2.group(1)));
-                            buf.append(chukiMap.get("字下げ複合1")[0]+arg0);
+                            buf.append(chukiMap.get("字下げ複合1")[0]).append(arg0);
                             // 複合注記クラス追加
                             if (chukiTag.indexOf("破線罫囲み") > 0) buf.append(" ").append(chukiMap.get("字下げ破線罫囲み")[0]);
                             else if (chukiTag.indexOf("罫囲み") > 0) buf.append(" ").append(chukiMap.get("字下げ罫囲み")[0]);
@@ -2296,7 +2296,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
             this.convertEscapedText(buf, ch, charStart, ch.length);
         }
         // 行末タグを追加
-        if (bufSuf.length() > 0) buf.append(bufSuf.toString());
+        if (bufSuf.length() > 0) buf.append(bufSuf);
 
         // 底本：で前が改ページでなければ改ページ追加
         if (separateColophon) {
@@ -2752,7 +2752,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
             if (i<end-2 && ch[i+1] == 0xDB40) {
                 String ivsCode = Integer.toHexString(Character.toCodePoint(ch[i+1], ch[i+2]));
                 if (ivs16FontMap != null) {
-                    String className = "u"+Integer.toHexString((int)ch[i])+"-u"+ivsCode;
+                    String className = "u"+Integer.toHexString(ch[i])+"-u"+ivsCode;
                     gaijiFileName = ivs16FontMap.get(className);
                     if (gaijiFileName != null) {
                         if (this.printGlyphFontTag(buf, gaijiFileName, className, '〓')) {
@@ -2765,7 +2765,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                 if (utf16FontMap != null && utf16FontMap.containsKey((int)ch[i])) {
                     gaijiFileName = utf16FontMap.get((int)ch[i]);
                     if (gaijiFileName != null) {
-                        if (this.printGlyphFontTag(buf, gaijiFileName, "u"+Integer.toHexString((int)ch[i]), '〓')) {
+                        if (this.printGlyphFontTag(buf, gaijiFileName, "u"+Integer.toHexString(ch[i]), '〓')) {
                             logger.warning(lineNum + " 外字フォント利用(IVS除外) "+ch[i]+"("+gaijiFileName+") -"+ivsCode);
                             i+=2; // IVSの次へ
                             continue;
@@ -2806,7 +2806,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                 if (utf16FontMap != null && utf16FontMap.containsKey((int)ch[i])) {
                     gaijiFileName = utf16FontMap.get((int)ch[i]);
                     if (gaijiFileName != null) {
-                        if (this.printGlyphFontTag(buf, gaijiFileName, "u"+Integer.toHexString((int)ch[i]), '〓')) {
+                        if (this.printGlyphFontTag(buf, gaijiFileName, "u"+Integer.toHexString(ch[i]), '〓')) {
                             logger.info(lineNum + " 外字フォント利用(IVS除外) "+ch[i]+"("+gaijiFileName+") -"+Integer.toHexString(ch[i+1]));
                             i++; // IVSの次へ
                             continue;
@@ -2832,7 +2832,7 @@ logger.info("ivs32FontMap: " + (ivs32FontMap != null ? ivs32FontMap.size() : 0))
                 // 通常文字の外字指定 ほぼすべての文字が対象になるので先にcontainsKeyで判定
                 gaijiFileName = utf16FontMap.get((int)ch[i]);
                 if (gaijiFileName != null) {
-                    if (this.printGlyphFontTag(buf, gaijiFileName, "u"+Integer.toHexString((int)ch[i]), '〓')) {
+                    if (this.printGlyphFontTag(buf, gaijiFileName, "u"+Integer.toHexString(ch[i]), '〓')) {
                         logger.info(lineNum + " 外字フォント利用 "+ch[i]+"("+gaijiFileName+")");
                         // 次の文字へ
                         continue;

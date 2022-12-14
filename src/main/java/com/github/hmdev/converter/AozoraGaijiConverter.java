@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -39,16 +40,15 @@ public class AozoraGaijiConverter
      * @throws IOException */
     private void loadChukiFile(String srcFile, Map<String, String> chukiMap) throws IOException
     {
-        BufferedReader src = new BufferedReader(new InputStreamReader(AozoraGaijiConverter.class.getResourceAsStream(srcFile), "UTF-8"));
-        String line;
-        int lineNum = 0;
-        try {
+        try (BufferedReader src = new BufferedReader(new InputStreamReader(AozoraGaijiConverter.class.getResourceAsStream(srcFile), StandardCharsets.UTF_8))) {
+            String line;
+            int lineNum = 0;
             while ((line = src.readLine()) != null) {
-                if (line.length() > 0 && line.charAt(0)!='#') {
+                if (line.length() > 0 && line.charAt(0) != '#') {
                     try {
                         int charStart = line.indexOf('\t');
                         if (charStart == -1) continue;
-                        charStart = line.indexOf('\t', charStart+1);
+                        charStart = line.indexOf('\t', charStart + 1);
                         if (charStart == -1) continue;
                         charStart++;
                         int chukiStart = line.indexOf('\t', charStart);
@@ -57,12 +57,13 @@ public class AozoraGaijiConverter
                         if (!line.startsWith("※［＃", chukiStart)) continue;
                         int chukiEnd = line.indexOf('\t', chukiStart);
                         int chukiCode = line.indexOf('、', chukiStart);
-                        if (chukiCode != -1 && line.charAt(chukiCode+1) == '「') chukiCode = line.indexOf('、', chukiCode+1); // 注記内に、がある
-                        if (chukiCode != -1 && (chukiEnd == -1 || chukiCode < chukiEnd)) chukiEnd = chukiCode+1;
+                        if (chukiCode != -1 && line.charAt(chukiCode + 1) == '「')
+                            chukiCode = line.indexOf('、', chukiCode + 1); // 注記内に、がある
+                        if (chukiCode != -1 && (chukiEnd == -1 || chukiCode < chukiEnd)) chukiEnd = chukiCode + 1;
                         if (chukiEnd == -1) chukiEnd = line.length();
 
-                        String utfChar = line.substring(charStart, chukiStart-1);
-                        String chuki = line.substring(chukiStart+3, chukiEnd-1);
+                        String utfChar = line.substring(charStart, chukiStart - 1);
+                        String chuki = line.substring(chukiStart + 3, chukiEnd - 1);
                         if (chukiMap.containsKey(chuki)) logger.warning(lineNum + " 外字注記定義重複 " + chuki);
                         else chukiMap.put(chuki, utfChar);
 
@@ -72,8 +73,6 @@ public class AozoraGaijiConverter
                 }
                 lineNum++;
             }
-        } finally {
-            src.close();
         }
     }
 

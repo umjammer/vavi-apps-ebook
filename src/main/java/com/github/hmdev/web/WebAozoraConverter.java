@@ -13,6 +13,7 @@ import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -120,7 +121,7 @@ public class WebAozoraConverter
                     if (!extractInfoFile.isFile()) return;
                     this.queryMap = new HashMap<>();
                     String line;
-                    BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(extractInfoFile), "UTF-8"));
+                    BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(extractInfoFile), StandardCharsets.UTF_8));
                     try {
                         while ((line = br.readLine()) != null) {
                             if (line.length() == 0 || line.charAt(0) == '#') continue;
@@ -143,18 +144,14 @@ public class WebAozoraConverter
                     this.replaceMap = new HashMap<>();
                     File replaceInfoFile = new File(configPath.getAbsolutePath()+"/"+fqdn+"/replace.txt");
                     if (replaceInfoFile.isFile()) {
-                        br = new BufferedReader(new InputStreamReader(new FileInputStream(replaceInfoFile), "UTF-8"));
+                        br = new BufferedReader(new InputStreamReader(new FileInputStream(replaceInfoFile), StandardCharsets.UTF_8));
                         try {
                             while ((line = br.readLine()) != null) {
                                 if (line.length() == 0 || line.charAt(0) == '#') continue;
                                 String[] values = line.split("\t");
                                 if (values.length > 1) {
                                     ExtractId extractId = ExtractId.valueOf(values[0]);
-                                    List<String[]> vecReplace = this.replaceMap.get(extractId);
-                                    if (vecReplace == null) {
-                                        vecReplace = new ArrayList<>();
-                                        this.replaceMap.put(extractId, vecReplace);
-                                    }
+                                    List<String[]> vecReplace = this.replaceMap.computeIfAbsent(extractId, k -> new ArrayList<>());
                                     vecReplace.add(new String[]{values[1], values.length==2?"":values[2]});
                                 }
                             }
@@ -214,7 +211,7 @@ public class WebAozoraConverter
 
         // 末尾の / をリダイレクトで取得
         urlString = urlString.trim();
-        if (!urlString.endsWith("/") && !urlString.endsWith(".html") && !urlString.endsWith(".htm") && urlString.indexOf("?") == -1 ) {
+        if (!urlString.endsWith("/") && !urlString.endsWith(".html") && !urlString.endsWith(".htm") && !urlString.contains("?")) {
             HttpURLConnection connection = null;
             try {
                 connection = (HttpURLConnection) new URL(urlString+"/").openConnection();
@@ -247,7 +244,7 @@ public class WebAozoraConverter
 
         String urlParentPath = urlFilePath;
         // kakuyomu用のアドレス修正
-        if((urlFilePath.indexOf("kakuyomu")!= -1) || (urlFilePath.indexOf("novelup")!= -1)) {
+        if((urlFilePath.contains("kakuyomu")) || (urlFilePath.contains("novelup"))) {
             urlFilePath +="/";
             logger.info("URL修正");
         }
@@ -272,11 +269,10 @@ public class WebAozoraConverter
             parentFile.delete();
         }
         parentFile.mkdirs();
-        BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(txtFile), "UTF-8"));
-        try {
+        try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(txtFile), StandardCharsets.UTF_8))) {
 
             // urlStringのファイルをキャッシュ
-            File cacheFile = new File(cachePath.getAbsolutePath()+"/"+urlFilePath);
+            File cacheFile = new File(cachePath.getAbsolutePath() + "/" + urlFilePath);
             try {
                 logger.info(urlString);
                 cacheFile(urlString, cacheFile, null);
@@ -369,7 +365,10 @@ public class WebAozoraConverter
                     logger.info("PAGE_NUM : ページ数が取得できません");
                 }
                 int pageNum = -1;
-                try { pageNum = Integer.parseInt(pageNumString); } catch (Exception e) {}
+                try {
+                    pageNum = Integer.parseInt(pageNumString);
+                } catch (Exception e) {
+                }
                 Element pageUrlElement = getExtractFirstElement(doc, this.queryMap.get(ExtractId.PAGE_URL));
                 if (pageUrlElement == null && this.queryMap.containsKey(ExtractId.PAGE_URL)) {
                     logger.info("PAGE_URL : ページ番号用のURLが取得できません");
@@ -377,14 +376,14 @@ public class WebAozoraConverter
                 if (pageNum > 0 && pageUrlElement != null) {
                     ExtractInfo pageUrlExtractInfo = this.queryMap.get(ExtractId.PAGE_URL)[0];
                     // リンク生成 1～ページ番号まで
-                    for (int i=1; i<=pageNum; i++) {
+                    for (int i = 1; i <= pageNum; i++) {
                         String pageUrl = pageUrlElement.attr("href");
                         if (pageUrl != null) {
-                            pageUrl = pageUrlExtractInfo.replace(pageUrl+"\t"+i);
+                            pageUrl = pageUrlExtractInfo.replace(pageUrl + "\t" + i);
                             if (pageUrl != null) {
                                 if (!pageUrl.startsWith("http")) {
-                                    if (pageUrl.charAt(0) == '/') pageUrl = baseUri+pageUrl;
-                                    else pageUrl = listBaseUrl+pageUrl;
+                                    if (pageUrl.charAt(0) == '/') pageUrl = baseUri + pageUrl;
+                                    else pageUrl = listBaseUrl + pageUrl;
                                 }
                                 chapterHrefs.add(pageUrl);
                             }
@@ -419,8 +418,8 @@ public class WebAozoraConverter
                     if (!extractInfo.hasPattern() || extractInfo.matches(hrefString)) {
                         String chapterHref = hrefString;
                         if (!hrefString.startsWith("http")) {
-                            if (hrefString.charAt(0) == '/') chapterHref = baseUri+hrefString;
-                            else chapterHref = listBaseUrl+hrefString;
+                            if (hrefString.charAt(0) == '/') chapterHref = baseUri + hrefString;
+                            else chapterHref = listBaseUrl + hrefString;
                         }
                         chapterHrefs.add(chapterHref);
                     }
@@ -437,7 +436,7 @@ public class WebAozoraConverter
                 updated = false;
 
                 // 追加更新対象の期限 これより大きければ追加更新
-                long expire = System.currentTimeMillis()-(long)(this.modifiedExpire*3600000);
+                long expire = System.currentTimeMillis() - (long) (this.modifiedExpire * 3600000);
                 // 追加更新分のみ出力時に利用
                 HashSet<Integer> modifiedChapterIdx = null;
                 // 更新されていない最後の話数 0～
@@ -459,8 +458,8 @@ public class WebAozoraConverter
                         }
 
                         //キャッシュ取得 ロードされたらWait 500ms
-                        String chapterPath = CharUtils.escapeUrlToFile(chapterHref.substring(chapterHref.indexOf("//")+2));
-                        File chapterCacheFile = new File(cachePath.getAbsolutePath()+"/"+chapterPath+(chapterPath.endsWith("/")?"index.html":""));
+                        String chapterPath = CharUtils.escapeUrlToFile(chapterHref.substring(chapterHref.indexOf("//") + 2));
+                        File chapterCacheFile = new File(cachePath.getAbsolutePath() + "/" + chapterPath + (chapterPath.endsWith("/") ? "index.html" : ""));
                         //hrefsのときは更新分のみurlsに入っている
                         boolean loaded = false;
 
@@ -470,9 +469,12 @@ public class WebAozoraConverter
                         if (noUpdateUrls != null && !noUpdateUrls.contains(chapterHref)) reload = true;
 
                         if (reload || !chapterCacheFile.exists()) {
-                            logger.info("["+(chapterIdx+1)+"/"+chapterHrefs.size()+"] "+chapterHref);
+                            logger.info("[" + (chapterIdx + 1) + "/" + chapterHrefs.size() + "] " + chapterHref);
                             try {
-                                try { Thread.sleep(this.interval); } catch (InterruptedException e) { }
+                                try {
+                                    Thread.sleep(this.interval);
+                                } catch (InterruptedException e) {
+                                }
                                 cacheFile(chapterHref, chapterCacheFile, urlString);
                                 logger.info(" : Loaded.");
                                 //ファイルがロードされたら更新有り
@@ -480,13 +482,13 @@ public class WebAozoraConverter
                                 loaded = true;
                             } catch (Exception e) {
                                 e.printStackTrace();
-                                logger.info("htmlファイルが取得できませんでした : "+chapterHref);
+                                logger.info("htmlファイルが取得できませんでした : " + chapterHref);
                             }
                         }
                         //キャッシュされているファイルが指定時間内なら更新扱い
                         if (!loaded) {
                             if (this.modifiedExpire > 0 && (this.convertModifiedOnly || this.convertUpdated) && chapterCacheFile.lastModified() >= expire) {
-                                logger.info("["+(chapterIdx+1)+"/"+chapterHrefs.size()+"] "+chapterHref);
+                                logger.info("[" + (chapterIdx + 1) + "/" + chapterHrefs.size() + "] " + chapterHref);
                                 logger.info(" : Modified.");
                                 this.updated = true;
                             }
@@ -509,7 +511,7 @@ public class WebAozoraConverter
                 }
                 //更新が無くて変換もなければ終了
                 if (!this.updated) {
-                    logger.info("「"+title+"」");
+                    logger.info("「" + title + "」");
                     logger.info("の更新はありません");
                     if (this.convertUpdated) return null;
                 }
@@ -517,16 +519,16 @@ public class WebAozoraConverter
                 if (this.convertModifiedOnly) {
                     //更新前の話数を追加 昇順で重複もはじく
                     if (this.beforeChapter > 0) {
-                        int startIdx = Math.max(0, lastNoModifiedChapterIdx-this.beforeChapter+1);
+                        int startIdx = Math.max(0, lastNoModifiedChapterIdx - this.beforeChapter + 1);
                         if (modifiedChapterIdx.size() == 0) {
                             //追加分なし
-                            int idx = chapterHrefs.size()-1;
-                            for (int i=0; i<this.beforeChapter; i++) {
+                            int idx = chapterHrefs.size() - 1;
+                            for (int i = 0; i < this.beforeChapter; i++) {
                                 modifiedChapterIdx.add(idx--);
                             }
                         } else {
                             //追加分あり
-                            for (int i=startIdx; i<=lastNoModifiedChapterIdx; i++) {
+                            for (int i = startIdx; i <= lastNoModifiedChapterIdx; i++) {
                                 modifiedChapterIdx.add(i);
                             }
                         }
@@ -539,9 +541,9 @@ public class WebAozoraConverter
                 } else {
                     //最新話数指定
                     if (this.beforeChapter > 0) {
-                        int idx = chapterHrefs.size()-1;
+                        int idx = chapterHrefs.size() - 1;
                         modifiedChapterIdx = new HashSet<>();
-                        for (int i=0; i<this.beforeChapter; i++) {
+                        for (int i = 0; i < this.beforeChapter; i++) {
                             modifiedChapterIdx.add(idx--);
                         }
                     }
@@ -554,8 +556,8 @@ public class WebAozoraConverter
 
                     if (modifiedChapterIdx == null || modifiedChapterIdx.contains(chapterIdx)) {
                         //キャッシュファイル取得
-                        String chapterPath = CharUtils.escapeUrlToFile(chapterHref.substring(chapterHref.indexOf("//")+2));
-                        File chapterCacheFile = new File(cachePath.getAbsolutePath()+"/"+chapterPath+(chapterPath.endsWith("/")?"index.html":""));
+                        String chapterPath = CharUtils.escapeUrlToFile(chapterHref.substring(chapterHref.indexOf("//") + 2));
+                        File chapterCacheFile = new File(cachePath.getAbsolutePath() + "/" + chapterPath + (chapterPath.endsWith("/") ? "index.html" : ""));
                         //シリーズタイトルを出力
                         Document chapterDoc = Jsoup.parse(chapterCacheFile, null);
                         String chapterTitle = getExtractText(chapterDoc, this.queryMap.get(ExtractId.CONTENT_CHAPTER));
@@ -589,23 +591,23 @@ public class WebAozoraConverter
                     int preIdx = -1;
                     boolean idxConnected = false;
                     //出力話数生成
-                    for (int idx=0; idx<chapterHrefs.size(); idx++) {
+                    for (int idx = 0; idx < chapterHrefs.size(); idx++) {
                         if (modifiedChapterIdx.contains(idx)) {
-                            if (buf.length() == 0) buf.append((idx+1));
+                            if (buf.length() == 0) buf.append((idx + 1));
                             else {
-                                if (preIdx == idx-1) {
+                                if (preIdx == idx - 1) {
                                     idxConnected = true;
                                 } else {
-                                    if (idxConnected) buf.append("-"+(preIdx+1));
+                                    if (idxConnected) buf.append("-" + (preIdx + 1));
                                     idxConnected = false;
-                                    buf.append(","+(idx));
+                                    buf.append("," + (idx));
                                 }
                             }
                             preIdx = idx;
                         }
                     }
-                    if (idxConnected) buf.append("-"+(preIdx+1));
-                    logger.info(buf+"話を変換します");
+                    if (idxConnected) buf.append("-" + (preIdx + 1));
+                    logger.info(buf + "話を変換します");
                 }
             }
             //底本にURL追加
@@ -621,8 +623,6 @@ public class WebAozoraConverter
             bw.append(dateFormat.format(new Date()));
             bw.append('\n');
 
-        } finally {
-            bw.close();
         }
 
         this.canceled = false;
@@ -641,28 +641,24 @@ public class WebAozoraConverter
         } else {
             if (updateInfoFile.exists()) {
                 //前回の更新情報を取得して比較
-                BufferedReader updateBr = new BufferedReader(new InputStreamReader(new FileInputStream(updateInfoFile), "UTF-8"));
-                try {
+                try (BufferedReader updateBr = new BufferedReader(new InputStreamReader(new FileInputStream(updateInfoFile), StandardCharsets.UTF_8))) {
                     String line;
-                    while ((line=updateBr.readLine()) != null) {
+                    while ((line = updateBr.readLine()) != null) {
                         int idx = line.indexOf("\t");
                         if (idx > 0) {
-                            updateStringMap.put(line.substring(0, idx), line.substring(idx+1));
+                            updateStringMap.put(line.substring(0, idx), line.substring(idx + 1));
                         }
                     }
 
                 } catch (Exception e) {
                     e.printStackTrace();
-                } finally {
-                    updateBr.close();
                 }
             }
         }
 
         if (contentsUpdate != null || updates != null) {
             //ファイルに出力
-            BufferedWriter updateBw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(updateInfoFile), "UTF-8"));
-            try {
+            try (BufferedWriter updateBw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(updateInfoFile), StandardCharsets.UTF_8))) {
                 if (contentsUpdate != null) {
                     updateBw.append(urlString);
                     updateBw.append('\t');
@@ -680,8 +676,6 @@ public class WebAozoraConverter
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-            } finally {
-                updateBw.close();
             }
         }
 
@@ -840,8 +834,7 @@ public class WebAozoraConverter
                 return;
             }
             if (node instanceof TextNode) printText(bw, ((TextNode)node).getWholeText());
-            else if (node instanceof Element) {
-                Element elem = (Element)node;
+            else if (node instanceof Element elem) {
                 if ("br".equals(elem.tagName())) {
                     if (elem.nextSibling() != null) bw.append('\n');
                 } else if ("div".equals(elem.tagName())) {
@@ -894,8 +887,7 @@ public class WebAozoraConverter
     /** 前がブロック注記かどうか */
     private boolean isBlockNode(Node node)
     {
-        if (node instanceof Element) {
-            Element elem = (Element)node;
+        if (node instanceof Element elem) {
             String tagName = elem.tagName();
             if ("br".equals(tagName)) return true;
             if ("div".equals(tagName))  return true;
@@ -974,7 +966,7 @@ public class WebAozoraConverter
 
         if (bw != null) {
             bw.append("［＃挿絵（");
-            bw.append("images/"+imagePath);
+            bw.append("images/").append(imagePath);
             bw.append("）入る］\n");
         }
     }
@@ -1123,9 +1115,9 @@ public class WebAozoraConverter
     {
         if (elem != null) {
             List<TextNode> nodes = elem.textNodes();
-            for (Node node : nodes) {
+            for (TextNode node : nodes) {
                 if (node instanceof TextNode) {
-                    String text = ((TextNode) node).getWholeText();
+                    String text = node.getWholeText();
                     if (text != null && text.length() > 0) {
                         text = text.replaceAll("[\n|\r]", "").replaceAll("\t", " ").trim();
                         if (text.length() > 0) return text;

@@ -8,6 +8,7 @@ import java.awt.Image;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.Serial;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -26,6 +27,7 @@ import javax.swing.border.Border;
 public class JProfileDialog extends JDialog
 {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     JTextField jTextProfileName;

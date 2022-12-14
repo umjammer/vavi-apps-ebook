@@ -2,6 +2,7 @@ package com.github.hmdev.swing;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.io.Serial;
 
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
@@ -12,6 +13,7 @@ import com.github.hmdev.info.ChapterLineInfo;
 
 public class JTocTable extends JTable
 {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     TocTableDataModel model = null;
@@ -19,7 +21,7 @@ public class JTocTable extends JTable
     public JTocTable()
     {
         super();
-        this.model = new TocTableDataModel(new String[]{"", "", "", "行", "目次名称"}, 0, this);
+        this.model = new TocTableDataModel(new String[] {"", "", "", "行", "目次名称"}, 0, this);
         super.setModel(this.model);
         TableColumnModel columnModel = this.getColumnModel();
         columnModel.getColumn(0).setMaxWidth(22);
@@ -30,9 +32,7 @@ public class JTocTable extends JTable
         columnModel.getColumn(3).setMaxWidth(60);
         columnModel.getColumn(3).setPreferredWidth(35);
 
-        this.model.addTableModelListener(ev -> {
-                model.table.repaint();
-        });
+        this.model.addTableModelListener(ev -> model.table.repaint());
     }
 
     @Override
@@ -50,8 +50,9 @@ public class JTocTable extends JTable
         return component;
     }
 
-    public class TocTableDataModel extends DefaultTableModel
+    public static class TocTableDataModel extends DefaultTableModel
     {
+        @Serial
         private static final long serialVersionUID = 1L;
 
         JTocTable table;
@@ -60,7 +61,7 @@ public class JTocTable extends JTable
             super(columnNames, rowNum);
             this.table = table;
         }
-        @SuppressWarnings({ "unchecked", "rawtypes" })
+        @SuppressWarnings({"rawtypes" })
         public Class getColumnClass(int col) {
             switch (col) {
             case 0: return Boolean.class;
@@ -90,7 +91,7 @@ public class JTocTable extends JTable
         }
         public boolean isPageBreak(int row)
         {
-            return "改".equals((String)this.getValueAt(row, 1));
+            return "改".equals(this.getValueAt(row, 1));
         }
         public int getChapterType(int row)
         {

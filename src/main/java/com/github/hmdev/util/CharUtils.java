@@ -32,10 +32,10 @@ public class CharUtils
     /** 半角数字かチェック */
     static public boolean isNum(char ch)
     {
-        switch (ch) {
-            case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9': return true;
-        }
-        return false;
+        return switch (ch) {
+            case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' -> true;
+            default -> false;
+        };
     }
 
     /** 英字かどうかをチェック 拡張ラテン文字含む
@@ -77,10 +77,10 @@ public class CharUtils
     /** 半角数字かチェック */
     static public boolean isFullNum(char ch)
     {
-        switch (ch) {
-            case '０': case '１': case '２': case '３': case '４': case '５': case '６': case '７': case '８': case '９': return true;
-        }
-        return false;
+        return switch (ch) {
+            case '０', '１', '２', '３', '４', '５', '６', '７', '８', '９' -> true;
+            default -> false;
+        };
     }
 
     /** ひらがなかチェック 半角濁点半濁点は全角に変換済 */
@@ -94,14 +94,12 @@ public class CharUtils
     static public boolean isKatakana(char ch)
     {
         if ('ァ'<=ch && ch<='ヶ') return true;
-        switch (ch) {
-        case 'ァ': case 'ィ': case 'ゥ': case 'ェ': case 'ォ': case 'ヵ': case 'ㇰ': case 'ヶ': case 'ㇱ': case 'ㇲ': case 'ッ': case 'ㇳ': case 'ㇴ':
-        case 'ㇵ': case 'ㇶ': case 'ㇷ': case 'ㇸ': case 'ㇹ': case 'ㇺ': case 'ャ': case 'ュ': case 'ョ': case 'ㇻ': case 'ㇼ': case 'ㇽ': case 'ㇾ': case 'ㇿ': case 'ヮ':
-        case 'ー': case 'ゝ': case 'ゞ': case 'ヽ': case 'ヾ': case '゛': case '゜':
-        //case 'ﾞ': case 'ﾟ':
-            return true;
-        }
-        return false;
+        return switch (ch) {
+            case 'ァ', 'ィ', 'ゥ', 'ェ', 'ォ', 'ヵ', 'ㇰ', 'ヶ', 'ㇱ', 'ㇲ', 'ッ', 'ㇳ', 'ㇴ', 'ㇵ', 'ㇶ', 'ㇷ', 'ㇸ', 'ㇹ', 'ㇺ', 'ャ', 'ュ', 'ョ', 'ㇻ', 'ㇼ', 'ㇽ', 'ㇾ', 'ㇿ', 'ヮ', 'ー', 'ゝ', 'ゞ', 'ヽ', 'ヾ', '゛', '゜' ->
+                //case 'ﾞ': case 'ﾟ':
+                    true;
+            default -> false;
+        };
     }
 
     static public boolean isSpace(String line)
@@ -126,17 +124,18 @@ public class CharUtils
      * IVS文字 U+e0100-e01efも漢字扱い */
     static public boolean isKanji(char[] ch, int i)
     {
-        switch (ch[i]) {
-        case '゛': case '゜':
-            // 二の字点は濁点付きも漢字
-            return (i>0 && ch[i-1]=='〻');
+        return switch (ch[i]) {
+            case '゛', '゜' ->
+                // 二の字点は濁点付きも漢字
+                    (i > 0 && ch[i - 1] == '〻');
+            default ->
         /*case 'ノ': case 'カ': case 'ケ': case 'ヵ': case 'ヶ':
             // 漢字の間にある場合だけ漢字扱い
             if (i==0 || i+1==ch.length) return false;
             return _isKanji(ch, i-1) && _isKanji(ch, i+1);
         */
-        }
-        return _isKanji(ch, i);
+                    _isKanji(ch, i);
+        };
     }
     /** カタカナ以外の漢字チェック */
     static private boolean _isKanji(char[] ch, int i)
@@ -145,8 +144,9 @@ public class CharUtils
         int c = ch[i];
         int suf = i+1>=ch.length?-1:ch[i+1];
         switch (c) {
-        case '〓': case '〆': case '々': case '〻':
+        case '〓', '〆', '々', '〻' -> {
             return true;
+        }
         }
         if (0x4E00 <= c && c <= 0x9FFF) return true; // '一' <= ch && ch <= '龠'
         if (0xF900 <= c && c <= 0xFAFF) return true; // CJK互換漢字
@@ -201,15 +201,16 @@ public class CharUtils
                 if (ch[i] == '》' && !CharUtils.isEscapedChar(ch, i)) inRuby = false;
             } else {
                 switch (ch[i]) {
-                case '｜':
-                    if (CharUtils.isEscapedChar(ch, i)) buf.append(ch[i]); 
-                    break;
-                case '《':
+                case '｜' -> {
+                    if (CharUtils.isEscapedChar(ch, i)) buf.append(ch[i]);
+                }
+                case '《' -> {
                     if (CharUtils.isEscapedChar(ch, i)) buf.append(ch[i]);
                     else inRuby = true;
-                    break;
-                default:
+                }
+                default -> {
                     if (!inRuby) buf.append(ch[i]);
+                }
                 }
             }
         }
